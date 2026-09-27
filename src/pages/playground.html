@@ -1,0 +1,113 @@
+<!--meta {"title": "Playground", "description": "Plans for compiling and running occam in the browser, and an occam listing scratchpad.", "section": "learn"} -->
+<header class="page-head">
+  <div class="wrap">
+    <span class="kicker">Playground · in progress</span>
+    <h1>occam in your browser</h1>
+    <p class="lede">The goal is to edit, compile and run every example on this site without
+      installing anything. Here is the plan. Meanwhile, the scratchpad below lets you write occam
+      with folding and both listing styles.</p>
+  </div>
+</header>
+
+<div class="wrap">
+  <details class="fold" open id="scratchpad">
+    <summary><h2>Scratchpad</h2><span class="fold-hint">highlighting &amp; folds only, no execution yet</span></summary>
+    <div class="fold-body">
+      <div class="two-col" style="gap:1rem">
+        <div>
+          <label for="pg-src" class="kicker">source</label>
+          <textarea id="pg-src" spellcheck="false" style="width:100%;min-height:24rem;font-family:var(--mono);font-size:.88rem;line-height:1.55;padding:1rem;border:1px solid var(--rule-strong);border-radius:var(--radius);background:var(--code-bg);color:var(--code-ink);tab-size:2;resize:vertical">#INCLUDE "course.module"
+
+{{{ PROC hello
+PROC hello (CHAN BYTE out!)
+  SEQ i = 1 FOR 3
+    SEQ
+      out.string ("Hello, world! ", 0, out!)
+      out.int (i, 0, out!)
+      out.string ("*n", 0, out!)
+:
+}}}</textarea>
+          <div class="btn-row" style="margin-top:.75rem">
+            <button class="btn" type="button" disabled title="Coming soon">Run</button>
+            <span class="muted" style="align-self:center;font-size:.9rem">Use <code>{{{ title</code> / <code>}}}</code> for folds.</span>
+          </div>
+        </div>
+        <div>
+          <span class="kicker">listing</span>
+          <div id="pg-out"></div>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="fold" open id="plan">
+    <summary><h2>How it will work</h2></summary>
+    <div class="fold-body prose">
+      <p>Everything in the Razor/KRoC toolchain needed to run occam is portable C, so the whole pipeline can
+        be compiled to <strong>WebAssembly</strong> and run in the browser with no server:</p>
+      <div class="procnet">
+        <script type="application/json">
+        { "title": "playground", "w": 720, "h": 200, "animate": true,
+          "caption": "Planned pipeline: every stage runs in the browser.",
+          "nodes": [
+            { "id": "ed", "label": "editor", "x": 90, "y": 100, "w": 110 },
+            { "id": "occ", "label": "occ21", "sub": "wasm", "x": 250, "y": 100, "w": 110 },
+            { "id": "lnk", "label": "linker", "sub": "bytecode", "x": 410, "y": 100, "w": 110 },
+            { "id": "tvm", "label": "TVM", "sub": "wasm", "x": 570, "y": 100, "w": 110 }
+          ],
+          "chans": [
+            { "from": "ed", "to": "occ", "label": "source" },
+            { "from": "occ", "to": "lnk", "label": "etc" },
+            { "from": "lnk", "to": "tvm", "label": "tbc" },
+            { "from": "tvm", "to": [710, 60], "via": [[650, 60]], "label": "screen", "at": [680, 46] },
+            { "from": [710, 150], "to": "tvm", "via": [[650, 150]], "label": "keys", "at": [684, 164] }
+          ] }
+        </script>
+      </div>
+      <ol>
+        <li><strong>Compiler.</strong> Build <code>occ21</code> from Razor with Emscripten. It reads
+          source and writes transputer-style intermediate code.</li>
+        <li><strong>Linker.</strong> Port the Transterpreter's bytecode linker to JavaScript or
+          WebAssembly.</li>
+        <li><strong>Runtime.</strong> The Transterpreter VM is already a small, portable C interpreter,
+          which makes it well suited to WebAssembly. Connect its <code>screen</code> and
+          <code>keyboard</code> channels to the page.</li>
+        <li><strong>Visualise.</strong> Because process networks are explicit in occam, the
+          playground can draw the running network as a live process diagram, with channels lighting up
+          as they communicate.</li>
+      </ol>
+      <p>Other routes: <a href="{{root}}implementations.html#spoc">SPoC</a> generates C, which could
+        be compiled to WebAssembly on a server, and the
+        <a href="https://nanochess.org/transputer_emulator.html">JavaScript transputer emulator</a>
+        can already run the original Inmos toolchain in a browser.</p>
+      <p>Want to help? See <a href="{{root}}about.html">contributing</a>.</p>
+    </div>
+  </details>
+</div>
+
+<script>
+(function () {
+  var src = document.getElementById("pg-src"), out = document.getElementById("pg-out");
+  function update() {
+    var pre = document.createElement("pre");
+    pre.className = "occam";
+    pre.setAttribute("data-nocopy", "");
+    pre.textContent = src.value;
+    out.innerHTML = "";
+    out.appendChild(pre);
+    if (window.OccamListing) OccamListing.enhance(pre);
+  }
+  var t;
+  src.addEventListener("input", function () { clearTimeout(t); t = setTimeout(update, 120); });
+  src.addEventListener("keydown", function (e) {
+    if (e.key === "Tab") {
+      e.preventDefault();
+      var s = src.selectionStart;
+      src.setRangeText("  ", s, src.selectionEnd, "end");
+      update();
+    }
+  });
+  document.addEventListener("DOMContentLoaded", update);
+  if (document.readyState !== "loading") update();
+})();
+</script>

@@ -1,0 +1,66 @@
+<!--meta {"title": "Learn occam", "description": "Learn occam and occam-pi through real, runnable examples: SEQ and PAR, channels, Welch's Legoland process networks, ALT and timers.", "section": "learn"} -->
+<header class="page-head">
+  <div class="wrap">
+    <span class="kicker">Learn</span>
+    <h1>Learn occam by example</h1>
+    <p class="lede">Four short lessons, each built around programs that compile and run under Razor
+      or KRoC. Every network is drawn as a process diagram, and every listing can be folded and
+      viewed as lecture notes.</p>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="procnet">
+    <script type="application/json">
+    { "title": "course", "w": 760, "h": 170, "animate": true,
+      "caption": "The course is a pipeline. Click a lesson to start it.",
+      "nodes": [
+        { "id": "l1", "label": "1  first", "sub": "PROC · SEQ · IF", "x": 120, "y": 85, "w": 140, "href": "first-program.html" },
+        { "id": "l2", "label": "2  channels", "sub": "PAR · ! · ?", "x": 295, "y": 85, "w": 140, "href": "channels.html" },
+        { "id": "l3", "label": "3  legoland", "sub": "networks", "x": 470, "y": 85, "w": 140, "href": "legoland.html" },
+        { "id": "l4", "label": "4  choice", "sub": "ALT · TIMER", "x": 645, "y": 85, "w": 140, "href": "alt.html" }
+      ],
+      "chans": [
+        { "from": [10, 85], "to": "l1", "label": "you" },
+        { "from": "l1", "to": "l2" }, { "from": "l2", "to": "l3" }, { "from": "l3", "to": "l4" }
+      ] }
+    </script>
+  </div>
+
+  <div class="card-grid" style="margin-top:2rem">
+    <a class="card" href="first-program.html"><span class="meta">lesson 1</span><h3>Your first program</h3><p>Hello world, indentation as syntax, declarations, <code>SEQ</code>, <code>IF</code>, <code>WHILE</code> and replicators.</p></a>
+    <a class="card" href="channels.html"><span class="meta">lesson 2</span><h3>Processes &amp; channels</h3><p><code>PAR</code>, synchronous communication, the rules that rule out data races, and your first deadlock.</p></a>
+    <a class="card" href="legoland.html"><span class="meta">lesson 3</span><h3>Legoland</h3><p>Peter Welch's small reusable processes, composed into <code>numbers</code>, <code>integrate</code>, <code>pairs</code> and Fibonacci.</p></a>
+    <a class="card" href="alt.html"><span class="meta">lesson 4</span><h3>Choice &amp; time</h3><p><code>ALT</code>, guards, <code>PRI ALT</code>, replicated alternation and <code>TIMER</code> timeouts.</p></a>
+  </div>
+
+  <div class="two-col section">
+    <div class="prose">
+      <h2>Setting up</h2>
+      <p>The lessons use occam-π as accepted by <a href="{{root}}implementations.html#razor">Razor</a>
+        (and KRoC), along with KRoC's standard <code>course</code> module for text output. Install
+        Razor, then:</p>
+<pre class="code">
+source /usr/local/razor/bin/razor-setup.sh
+occbuild --program hello.occ
+./hello
+</pre>
+      <p>Most examples are also valid occam 2.1 apart from the channel direction markers
+        (<code>in?</code>, <code>out!</code>). Remove those and write <code>CHAN OF INT</code> to use
+        an older compiler such as SPoC.</p>
+      <p>We plan to let you <a href="{{root}}playground.html">run the examples in your browser</a>.</p>
+    </div>
+    <div class="prose">
+      <h2>More to read</h2>
+      <ul>
+        <li>Pountain &amp; May, <a href="http://www.transputer.net/obooks/72-occ-046-00/tuinocc.pdf"><em>A Tutorial Introduction to occam Programming</em></a> (1987)</li>
+        <li>Jones &amp; Goldsmith, <a href="https://www.cs.ox.ac.uk/people/geraint.jones/publications/book/Pio2/"><em>Programming in occam 2</em></a>, free online</li>
+        <li>Peter Welch, <a href="https://www.cs.kent.ac.uk/projects/ofa/sei-cmu/"><em>Concurrency Design and Practice</em></a> (occam-π course, SEI/CMU)</li>
+        <li><a href="http://occam-pi.org/picourse/">occam-π workshop slides</a> and <a href="http://occam-pi.org/LearningResources/">learning resources</a></li>
+        <li>Kent's <a href="http://www.cs.kent.ac.uk/projects/ofa/co538/anonqa/index.html">CO538 anonymous Q&amp;A</a>: years of student questions, answered</li>
+        <li>Hyde, <a href="https://www.eg.bucknell.edu/~cs366/occam.pdf"><em>Introduction to the Programming Language occam</em></a></li>
+        <li>The <a href="https://www.wotug.org/occam/documentation/oc21refman.pdf">occam 2.1 Reference Manual</a></li>
+      </ul>
+    </div>
+  </div>
+</div>

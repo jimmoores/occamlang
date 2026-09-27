@@ -1,0 +1,142 @@
+<!--meta {"title": "Lesson 1: your first program", "description": "Your first occam program: hello world, indentation, declarations, SEQ, IF, WHILE and replicators.", "section": "learn"} -->
+<header class="page-head">
+  <div class="wrap narrow">
+    <span class="kicker">Lesson 1 of 4</span>
+    <h1>Your first program</h1>
+    <p class="lede">Hello world, and the handful of rules that make occam look the way it does.</p>
+  </div>
+</header>
+
+<div class="wrap narrow">
+  <details class="fold" open id="hello">
+    <summary><h2>Hello, world</h2></summary>
+    <div class="fold-body prose">
+      <figure class="listing">
+        <figcaption><span>hello.occ</span><span>occbuild --program hello.occ</span></figcaption>
+<pre class="occam">
+#INCLUDE "course.module"
+
+PROC hello (CHAN BYTE out!)
+  out.string ("Hello, world!*n", 0, out!)
+:
+</pre>
+      </figure>
+      <p>Line by line:</p>
+      <ul>
+        <li><code>#INCLUDE "course.module"</code> brings in KRoC's teaching library, which has
+          <code>out.string</code>, <code>out.int</code> and friends.</li>
+        <li>A program is a <code>PROC</code>. Its parameter is a <strong>channel</strong> of bytes,
+          <code>out</code>. The <code>!</code> says this process <em>writes</em> to it. The
+          run-time connects it to standard output.</li>
+        <li><code>out.string (s, field, out!)</code> sends each byte of <code>s</code> down
+          <code>out</code>. <code>*n</code> is occam's newline escape (occam uses <code>*</code>
+          where C uses <code>\</code>).</li>
+        <li>A lone <code>:</code> ends the declaration. Every declaration in occam, whether a
+          variable, channel or <code>PROC</code>, ends with a colon.</li>
+      </ul>
+    </div>
+  </details>
+
+  <details class="fold" open id="layout">
+    <summary><h2>Layout is syntax</h2></summary>
+    <div class="fold-body prose">
+      <p>occam has no braces and no <code>begin</code>/<code>end</code>. <strong>Indentation of
+        exactly two spaces</strong> shows that a process is part of the construct above it. Every
+        construct (<code>SEQ</code>, <code>PAR</code>, <code>IF</code>, <code>WHILE</code>,
+        <code>ALT</code>) is a keyword on its own line with its components indented beneath it:</p>
+<pre class="occam">
+SEQ
+  x := 1
+  y := x + 1
+  out ! y
+</pre>
+      <p>This is why occam fits folding editors so well: every indented block is a complete
+        process and can be folded away as a unit.</p>
+      <p>Declarations come immediately before the process they belong to, and their scope is that
+        process:</p>
+<pre class="occam">
+INT x, y:          -- two integers, in scope for the SEQ below
+SEQ
+  x := 6
+  y := x * 7
+</pre>
+    </div>
+  </details>
+
+  <details class="fold" open id="control">
+    <summary><h2>SEQ, IF and WHILE</h2></summary>
+    <div class="fold-body prose">
+      <p>A program that prints a times table:</p>
+      <figure class="listing">
+        <figcaption><span>table.occ</span><span>occam-π</span></figcaption>
+<pre class="occam">
+#INCLUDE "course.module"
+
+PROC table (CHAN BYTE out!)
+  VAL INT n IS 7:
+  SEQ i = 1 FOR 12              -- a replicated SEQ: i = 1, 2, ... 12
+    SEQ
+      out.int (i, 2, out!)
+      out.string (" x ", 0, out!)
+      out.int (n, 0, out!)
+      out.string (" = ", 0, out!)
+      out.int (i * n, 3, out!)
+      out.string ("*n", 0, out!)
+:
+</pre>
+      </figure>
+      <p><code>VAL INT n IS 7:</code> declares a named constant. <code>SEQ i = 1 FOR 12</code> is a
+        <strong>replicator</strong>: it runs its body 12 times with <code>i</code> counting from 1.
+        Replicators also work with <code>PAR</code>, <code>IF</code> and <code>ALT</code>.</p>
+      <p><code>IF</code> tests its conditions in order and runs the process under the first one that
+        is true:</p>
+<pre class="occam">
+IF
+  x &lt; 0
+    sign := -1
+  x = 0
+    sign := 0
+  TRUE
+    sign := 1
+</pre>
+      <div class="note"><strong>Watch out.</strong> If no condition in an <code>IF</code> is true, the
+        <code>IF</code> behaves like <code>STOP</code>, and the process stops forever. This is
+        deliberate: occam never silently ignores a case you did not handle. Finish with
+        <code>TRUE</code> / <code>SKIP</code> if doing nothing is really what you want.</div>
+      <p><code>WHILE</code> is the only loop:</p>
+<pre class="occam">
+INT a, b:
+SEQ
+  a, b := 1071, 462       -- multiple assignment
+  WHILE b &lt;&gt; 0
+    a, b := b, a \ b      -- \ is remainder
+  out.int (a, 0, out!)    -- gcd = 21
+</pre>
+    </div>
+  </details>
+
+  <details class="fold" open id="types">
+    <summary><h2>Types in brief</h2></summary>
+    <div class="fold-body prose">
+      <p><code>INT</code>, <code>INT16</code>, <code>INT32</code>, <code>INT64</code>,
+        <code>BYTE</code>, <code>BOOL</code>, <code>REAL32</code>, <code>REAL64</code>, and arrays
+        such as <code>[10]INT</code>. There are <strong>no implicit conversions</strong>: write
+        <code>REAL64 ROUND n</code> or <code>INT TRUNC x</code>. Arithmetic with <code>+</code>,
+        <code>-</code>, <code>*</code> is <em>checked</em>, so overflow is a run-time error.
+        <code>PLUS</code>, <code>MINUS</code> and <code>TIMES</code> wrap around silently. Operators
+        have no precedence, so mixed expressions must be bracketed: <code>(a + b) * c</code>.</p>
+    </div>
+  </details>
+
+  <div class="exercise">
+    <strong>Exercise</strong>
+    Write <code>PROC squares (CHAN BYTE out!)</code> that prints the squares of 1 to 20, one per
+    line, skipping any square that is divisible by 3. You will need a replicated <code>SEQ</code>
+    and an <code>IF</code> with a <code>TRUE</code> / <code>SKIP</code> branch.
+  </div>
+
+  <nav class="lesson-nav">
+    <a href="index.html"><span class="dir">← course</span>Learn occam</a>
+    <a href="channels.html" style="text-align:right"><span class="dir">lesson 2 →</span>Processes &amp; channels</a>
+  </nav>
+</div>

@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{title}}</title>
+  <meta name="description" content="{{description}}">
+  <link rel="canonical" href="{{canonical}}">
+  <meta property="og:title" content="{{title}}">
+  <meta property="og:description" content="{{description}}">
+  <meta property="og:url" content="{{canonical}}">
+  <meta property="og:site_name" content="occamlang.org">
+  <link rel="icon" href="{{root}}favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Hanken+Grotesk:ital,wght@0,400;0,500;0,700;0,800;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{root}}assets/css/site.css">
+  <script>
+    // Apply saved preferences before paint to avoid a flash.
+    try {
+      var t = localStorage.getItem("occam.theme"); if (t) document.documentElement.dataset.theme = t;
+      var l = localStorage.getItem("occam.listing"); if (l) document.documentElement.dataset.listing = l;
+    } catch (e) {}
+  </script>
+</head>
+<body data-section="{{section}}">
+  <a class="skip" href="#main">Skip to content</a>
+  <header class="site-header">
+    <div class="wrap header-inner">
+      <a class="wordmark" href="{{root}}index.html" aria-label="occamlang.org home">
+        <span class="wm-occam">occam</span><span class="wm-dot">.</span><span class="wm-lang">lang</span>
+      </a>
+      <button class="nav-toggle" aria-expanded="false" aria-controls="site-nav">Menu</button>
+      <nav id="site-nav" class="site-nav" aria-label="Main">
+        {{nav}}
+      </nav>
+      <div class="prefs" role="group" aria-label="Display preferences">
+        <button class="pref" id="listing-toggle" title="Switch code listings between Inmos typescript and hand-written lecture-note style" aria-pressed="false">
+          <span class="pref-a">SEQ</span><span class="pref-b">seq</span>
+        </button>
+        <button class="pref" id="theme-toggle" title="Toggle light / dark" aria-label="Toggle colour theme">
+          <svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true"><circle cx="10" cy="10" r="7" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M10 3a7 7 0 0 1 0 14z" fill="currentColor"/></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main id="main">
+{{content}}
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap">
+      <div class="footer-colon" aria-hidden="true">:</div>
+      <div class="footer-grid">
+        <div>
+          <p class="footer-brand"><span class="wm-occam">occam</span>lang.org</p>
+          <p class="muted">An independent home for occam, CSP and the transputer tradition. Also at <a href="https://occam-lang.org">occam-lang.org</a>.</p>
+        </div>
+        <div>
+          <h2 class="footer-h">Explore</h2>
+          <ul class="plain">
+            <li><a href="{{root}}history.html">History &amp; foundations</a></li>
+            <li><a href="{{root}}implementations.html">Implementations</a></li>
+            <li><a href="{{root}}learn/index.html">Learn occam</a></li>
+            <li><a href="{{root}}playground.html">Playground</a></li>
+          </ul>
+        </div>
+        <div>
+          <h2 class="footer-h">Research</h2>
+          <ul class="plain">
+            <li><a href="{{root}}archive.html">Paper archive</a></li>
+            <li><a href="{{root}}csp.html">CSP &amp; FDR</a></li>
+            <li><a href="{{root}}hardware.html">Transputers &amp; Handel-C</a></li>
+            <li><a href="{{root}}about.html">About &amp; contributing</a></li>
+            <li><a href="https://github.com/jimmoores/occamlang">Site source on GitHub</a></li>
+          </ul>
+        </div>
+        <div>
+          <h2 class="footer-h">Compilers</h2>
+          <ul class="plain">
+            <li><a href="https://github.com/jimmoores/razor">Razor</a> (KRoC fork)</li>
+            <li><a href="{{root}}implementations.html#spoc">SPoC</a></li>
+            <li><a href="https://github.com/concurrency/kroc">KRoC</a></li>
+          </ul>
+        </div>
+      </div>
+      <p class="footer-note muted">occam was a trademark of the INMOS Group of Companies. This site is not affiliated with STMicroelectronics or any successor of INMOS.</p>
+    </div>
+  </footer>
+  <script src="{{root}}assets/js/occam-highlight.js"></script>
+  <script src="{{root}}assets/js/procnet.js"></script>
+  <script src="{{root}}assets/js/site.js"></script>
+</body>
+</html>

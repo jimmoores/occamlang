@@ -1,0 +1,174 @@
+<!--meta {"title": "Lesson 4: choice & time", "description": "occam ALT: waiting on several channels, boolean guards, PRI ALT, replicated ALT, and TIMER timeouts.", "section": "learn"} -->
+<header class="page-head">
+  <div class="wrap narrow">
+    <span class="kicker">Lesson 4 of 4</span>
+    <h1>Choice &amp; time</h1>
+    <p class="lede"><code>ALT</code> lets a process wait for whichever of several things happens
+      first. With <code>TIMER</code> it can also react to time passing.</p>
+  </div>
+</header>
+
+<div class="wrap narrow">
+  <details class="fold" open id="alt">
+    <summary><h2>ALT</h2></summary>
+    <div class="fold-body prose">
+      <p>An <code>ALT</code> lists <em>guarded</em> alternatives. It waits until at least one guard
+        is ready, chooses one, and runs the process under it. A multiplexer that merges two streams
+        is:</p>
+      <div class="procnet">
+        <script type="application/json">
+        { "title": "mux", "w": 560, "h": 180, "animate": true,
+          "nodes": [ { "id": "m", "label": "mux", "x": 280, "y": 90, "w": 120 } ],
+          "chans": [
+            { "from": [30, 45], "to": "m", "label": "in.0", "at": [110, 52] },
+            { "from": [30, 135], "to": "m", "label": "in.1", "at": [110, 130] },
+            { "from": "m", "to": [530, 90], "label": "out" }
+          ] }
+        </script>
+      </div>
+<pre class="occam">
+PROC mux (CHAN INT in.0?, in.1?, out!)
+  WHILE TRUE
+    INT x:
+    ALT
+      in.0 ? x
+        out ! x
+      in.1 ? x
+        out ! x
+:
+</pre>
+      <p>The input in the guard happens first, and then the indented process runs. If both
+        inputs are ready, <code>ALT</code> picks one; the language does not say which. That
+        matches CSP's external choice, <code>□</code>.</p>
+    </div>
+  </details>
+
+  <details class="fold" open id="guards">
+    <summary><h2>Boolean guards</h2></summary>
+    <div class="fold-body prose">
+      <p>A guard can have a condition attached with <code>&amp;</code>. The alternative is only
+        considered while the condition is true. A bounded buffer only accepts input while there is
+        room and only offers output while it has something to give:</p>
+<pre class="occam">
+PROC buffer (VAL INT max, CHAN INT in?, request?, out!)
+  {{{! state: a circular queue
+  [64]INT q:
+  INT head, count:
+  }}}
+  SEQ
+    head, count := 0, 0
+    WHILE TRUE
+      ALT
+        (count &lt; max) &amp; in ? q[(head + count) \ max]
+          count := count + 1
+        INT any:
+        (count &gt; 0) &amp; request ? any
+          SEQ
+            out ! q[head]
+            head, count := (head + 1) \ max, count - 1
+:
+</pre>
+      <p>Note the <code>INT any:</code> declaration placed just before the second guard. It is in scope
+        only for that alternative. (<code>max</code> must be at most 64 here.)</p>
+    </div>
+  </details>
+
+  <details class="fold" open id="pri">
+    <summary><h2>PRI ALT</h2></summary>
+    <div class="fold-body prose">
+      <p><code>PRI ALT</code> gives earlier guards priority when several are ready. Here it is used
+        to make a <em>reset</em> signal always take effect before more data:</p>
+<pre class="occam">
+PROC integrate.reset (CHAN INT in?, reset?, out!)
+  INT total:
+  SEQ
+    total := 0
+    WHILE TRUE
+      PRI ALT
+        INT any:
+        reset ? any
+          total := 0
+        INT x:
+        in ? x
+          SEQ
+            total := total PLUS x
+            out ! total
+:
+</pre>
+      <p>Compare it with Legoland's <code>integrate</code>. The network version was easier to reason
+        about but could not be reset. This one keeps its state in a variable, so a single process can
+        respond to control signals. Both styles are good occam; choose the one that fits the job.</p>
+    </div>
+  </details>
+
+  <details class="fold" open id="replicated">
+    <summary><h2>Replicated ALT</h2></summary>
+    <div class="fold-body prose">
+      <p>An <code>ALT</code> can be replicated over an array of channels. This is how a server
+        listens to any number of clients:</p>
+<pre class="occam">
+PROC collect ([]CHAN INT in?, CHAN INT out!)
+  WHILE TRUE
+    ALT i = 0 FOR SIZE in
+      INT x:
+      in[i] ? x
+        out ! x
+:
+</pre>
+    </div>
+  </details>
+
+  <details class="fold" open id="timers">
+    <summary><h2>Time</h2></summary>
+    <div class="fold-body prose">
+      <p>A <code>TIMER</code> is a clock you can read like a channel: <code>tim ? t</code>. Its
+        units depend on the platform (microseconds in KRoC and Razor). <code>tim ? AFTER t</code>
+        waits until the clock passes <code>t</code>. Use <code>PLUS</code> for time arithmetic,
+        because the clock wraps around. A process that ticks at a steady rate:</p>
+<pre class="occam">
+PROC ticker (VAL INT period, CHAN INT out!)
+  TIMER tim:
+  INT t, n:
+  SEQ
+    n := 0
+    tim ? t
+    WHILE TRUE
+      SEQ
+        t := t PLUS period
+        tim ? AFTER t          -- sleep until the next tick
+        out ! n
+        n := n + 1
+:
+</pre>
+      <p>As an <code>ALT</code> guard, <code>AFTER</code> gives a <strong>timeout</strong>:</p>
+<pre class="occam">
+TIMER tim:
+INT now, x:
+SEQ
+  tim ? now
+  ALT
+    in ? x
+      out.string ("got a value*n", 0, screen!)
+    tim ? AFTER now PLUS 1000000        -- one second
+      out.string ("timed out*n", 0, screen!)
+</pre>
+    </div>
+  </details>
+
+  <div class="exercise">
+    <strong>Exercise: a stoppable counter</strong>
+    Write <code>PROC counter (CHAN BOOL pause?, CHAN INT out!)</code> that outputs 0, 1, 2, …
+    one per 100&nbsp;ms, and stops or restarts each time a value arrives on <code>pause</code>.
+    You will need a <code>PRI ALT</code>, a <code>TIMER</code> guard and a <code>BOOL</code>
+    guard condition.
+  </div>
+
+  <div class="note"><strong>Where next?</strong> Read about <a href="{{root}}implementations.html#occam-pi">occam-π's mobile
+    processes</a>, check your designs with <a href="{{root}}csp.html#fdr">FDR</a>, or look through the
+    <a href="{{root}}archive.html">archive</a> for deadlock-free design patterns.</div>
+
+  <nav class="lesson-nav">
+    <a href="legoland.html"><span class="dir">← lesson 3</span>Legoland</a>
+    <a href="index.html" style="text-align:right"><span class="dir">course →</span>Back to the course</a>
+  </nav>
+</div>

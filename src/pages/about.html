@@ -1,0 +1,69 @@
+<!--meta {"title": "About & contributing", "description": "About occamlang.org, its design, and how to contribute papers, examples and corrections.", "section": ""} -->
+<header class="page-head">
+  <div class="wrap narrow">
+    <span class="kicker">About</span>
+    <h1>About this site</h1>
+    <p class="lede">occamlang.org (also at occam-lang.org) aims to be the main home on the web for occam,
+      CSP and the transputer tradition. It picks up where WoTUG left off.</p>
+  </div>
+</header>
+
+<div class="wrap narrow">
+  <details class="fold" open id="why">
+    <summary><h2>Why</h2></summary>
+    <div class="fold-body prose">
+      <p>occam's ideas are more relevant now than when it was designed. Mainstream languages have
+        adopted channels, lightweight processes and message passing, but the material explaining
+        where those ideas came from, and how far occam took them, is scattered across failing
+        servers. This site gathers it, keeps it working, and teaches the language with programs
+        that run today.</p>
+    </div>
+  </details>
+
+  <details class="fold" open id="design">
+    <summary><h2>The design</h2></summary>
+    <div class="fold-body prose">
+      <ul>
+        <li><strong>Type.</strong> Inmos manuals and technical notes were set in Helvetica. The site
+          uses it where your system has it, falling back to a close grotesque.</li>
+        <li><strong>Folds.</strong> Every section, and many code listings, are folds in the style of
+          the Inmos TDS: <code>...</code> when closed, <code>{{{</code> and <code>}}}</code> when open.</li>
+        <li><strong>Process diagrams.</strong> Networks are drawn as Peter Welch drew them, as boxes
+          for processes and arrows for channels. Networks nest, and you can open them like folds.</li>
+        <li><strong>Lecture-note listings.</strong> The <kbd>SEQ</kbd>/<kbd>seq</kbd> switch in the
+          header shows code in the handwritten style of occam teaching, with lower-case,
+          underlined keywords.</li>
+      </ul>
+    </div>
+  </details>
+
+  <details class="fold" open id="contribute">
+    <summary><h2>Contributing</h2></summary>
+    <div class="fold-body prose">
+      <p>Contributions are very welcome, especially:</p>
+      <ul>
+        <li><strong>Papers and documents</strong> that are not yet online: WoTUG/OUG proceedings,
+          Inmos technical notes, theses, course notes;</li>
+        <li><strong>Examples</strong>: well-commented occam programs with a process diagram;</li>
+        <li><strong>Corrections</strong>: dates, attributions, broken links;</li>
+        <li><strong>Tooling</strong>: help with the <a href="{{root}}playground.html">in-browser
+          playground</a> and a modern build of <a href="{{root}}implementations.html#spoc">SPoC</a>.</li>
+      </ul>
+      <p>The site is plain HTML, CSS and JavaScript with a small dependency-free build script. Archive
+        entries are one JavaScript data file, so adding a paper is a one-line change. The source is
+        at <a href="https://github.com/jimmoores/occamlang">github.com/jimmoores/occamlang</a>.
+        Issues and pull requests are welcome.</p>
+      <p>For anything else, including offers of papers or documents, email
+        <a href="mailto:jim.moores@gmail.com">jim.moores@gmail.com</a>.</p>
+    </div>
+  </details>
+
+  <details class="fold" open id="thanks">
+    <summary><h2>Acknowledgements</h2></summary>
+    <div class="fold-body prose">
+      <p>This site relies on decades of work preserved by WoTUG and the CPA community, the University
+        of Kent's occam-π and KRoC projects, Dave Beckett's Internet Parallel Computing Archive, Michael
+        Brüstle's transputer.net, bitsavers, and the authors who put their papers and books online.</p>
+    </div>
+  </details>
+</div>

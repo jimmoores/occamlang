@@ -1,0 +1,193 @@
+<!--meta {"title": "Hardware", "description": "occam in silicon: the Inmos transputer family, Handel and Handel-C hardware compilation, FPGA transputer re-implementations and XMOS.", "section": "hardware"} -->
+<header class="page-head">
+  <div class="wrap">
+    <span class="kicker">Hardware</span>
+    <h1>occam in silicon</h1>
+    <p class="lede">occam was designed for a processor, and it later became a way to design
+      processors. This page covers the transputer, hardware compilation with Handel-C, and the
+      FPGA and XMOS work that continues both.</p>
+  </div>
+</header>
+
+<div class="wrap page-layout">
+  <nav class="toc" aria-label="On this page">
+    <span class="kicker">Contents</span>
+    <a href="#transputer">The transputer</a>
+    <a href="#family">The family</a>
+    <a href="#handel">Handel &amp; Handel-C</a>
+    <a href="#fpga">Transputers in FPGA</a>
+    <a href="#xmos">XMOS</a>
+    <a href="#resources">Resources</a>
+    <div class="fold-tools">
+      <button class="btn small ghost" data-fold="open">open all</button>
+      <button class="btn small ghost" data-fold="close">close all</button>
+    </div>
+  </nav>
+  <div>
+    <details class="fold" open id="transputer">
+      <summary><h2>The transputer</h2></summary>
+      <div class="fold-body prose">
+        <p>A transputer is a microprocessor with its own RAM, a memory interface and <strong>four
+          serial links</strong> on one chip. Links connect directly to other transputers, so you
+          build a parallel computer by wiring chips into a grid, a pipeline, a tree or a hypercube,
+          with no shared bus.</p>
+        <p>The instruction set supports occam directly:</p>
+        <ul>
+          <li>a <strong>hardware scheduler</strong> with two priority levels runs processes, and a
+            context switch takes about a microsecond;</li>
+          <li><code>in</code> and <code>out</code> instructions perform channel communication. The
+            same instruction works for a channel between two processes on one chip (a memory word)
+            and a channel to another chip (a link), so a program can be spread across chips without
+            changing its logic;</li>
+          <li><code>alt</code> instructions implement <code>ALT</code>, and on-chip timers implement
+            <code>TIMER</code>.</li>
+        </ul>
+        <div class="procnet">
+          <script type="application/json">
+          { "title": "T800", "w": 620, "h": 330, "animate": true,
+            "caption": "A transputer is itself a process with four pairs of link channels. Open it to see the on-chip parts.",
+            "nodes": [
+              { "id": "t", "label": "T800", "sub": "32-bit + FPU", "x": 310, "y": 165, "w": 150, "h": 110,
+                "net": { "w": 620, "h": 330, "boundary": true,
+                  "nodes": [
+                    { "id": "cpu", "label": "CPU", "sub": "scheduler", "x": 200, "y": 120, "w": 120 },
+                    { "id": "fpu", "label": "FPU", "sub": "64-bit IEEE", "x": 200, "y": 240, "w": 120 },
+                    { "id": "ram", "label": "4K RAM", "x": 420, "y": 120, "w": 120 },
+                    { "id": "lk", "label": "links 0–3", "sub": "DMA engines", "x": 420, "y": 240, "w": 130 }
+                  ],
+                  "chans": [
+                    { "from": "cpu", "to": "fpu", "label": "", "via": [] },
+                    { "from": "cpu", "to": "ram", "label": "bus" },
+                    { "from": "lk", "to": "ram", "label": "DMA" },
+                    { "from": "lk", "to": [600, 240], "label": "out" },
+                    { "from": [600, 290], "to": "lk", "via": [[420, 290]], "label": "in", "at": [560, 278] }
+                  ] } }
+            ],
+            "chans": [
+              { "from": [310, 20], "to": "t", "label": "link 0" },
+              { "from": "t", "to": [600, 165], "label": "link 1" },
+              { "from": "t", "to": [310, 312], "label": "link 2" },
+              { "from": [20, 165], "to": "t", "label": "link 3" }
+            ] }
+          </script>
+        </div>
+      </div>
+    </details>
+
+    <details class="fold" open id="family">
+      <summary><h2>The family</h2></summary>
+      <div class="fold-body">
+        <div class="table-wrap"><table>
+          <thead><tr><th>part</th><th>year</th><th>notes</th></tr></thead>
+          <tbody>
+            <tr><td><strong>T414</strong></td><td>1985</td><td>32-bit, 2 KB on-chip RAM, four 10/20 Mbit/s links. The first production transputer.</td></tr>
+            <tr><td><strong>T212 / T222</strong></td><td>mid-1980s</td><td>16-bit parts for control and embedded use.</td></tr>
+            <tr><td><strong>T800</strong></td><td>1987</td><td>Adds an on-chip 64-bit floating-point unit and 4 KB RAM. The FPU's microcode was developed with formal methods.</td></tr>
+            <tr><td><strong>T425 / T805</strong></td><td>late 1980s</td><td>Improved T414 / T800, and the most widely deployed parts.</td></tr>
+            <tr><td><strong>C004 / C104</strong></td><td>late 1980s / 1990s</td><td>Link crossbar switch and packet router, for building large reconfigurable networks.</td></tr>
+            <tr><td><strong>T9000</strong></td><td>announced 1991</td><td>Superscalar redesign with virtual channels over DS-Links (later IEEE 1355). Delayed, and never a commercial success.</td></tr>
+          </tbody>
+        </table></div>
+        <p class="muted">Machines built from transputers included the Meiko Computing Surface, Parsytec
+          systems, the Atari ATW800 and many plug-in boards for PCs and workstations.</p>
+      </div>
+    </details>
+
+    <details class="fold" open id="handel">
+      <summary><h2>Handel &amp; Handel-C</h2></summary>
+      <div class="fold-body prose">
+        <p>A <code>PAR</code> of processes that communicate over channels already looks like a circuit.
+          Ian Page's Hardware Compilation Group at Oxford took that literally. Their 1991 paper with
+          Wayne Luk, <a href="https://www.doc.ic.ac.uk/~wl/papers/fpl91a.pdf"><em>Compiling occam into
+          FPGAs</em></a>, described <strong>Handel</strong>, an occam subset compiled directly to
+          gates on a field-programmable gate array.</p>
+        <p>The compilation scheme is simple:</p>
+        <ul>
+          <li>each assignment takes <strong>one clock cycle</strong>, so timing is predictable from
+            the source;</li>
+          <li><code>SEQ</code> becomes a chain of control flip-flops that passes a "go" token along;</li>
+          <li><code>PAR</code> starts all its branches in the same cycle and joins them when all have
+            finished;</li>
+          <li>channels become handshaking circuits, and variables become registers of whatever width
+            you declare.</li>
+        </ul>
+        <p>Around 1996, Handel was given a C-like syntax as <strong>Handel-C</strong>. It kept
+          <code>par</code>, <code>seq</code>, channels and <code>prialt</code>, and was
+          commercialised by Embedded Solutions Ltd, later <strong>Celoxica</strong>. Handel-C was
+          one of the first successful high-level languages for FPGA hardware/software co-design:
+          one CSP design could be split between software on a processor and logic on an FPGA.
+          (<a href="https://en.wikipedia.org/wiki/Handel-C">History</a>)</p>
+        <p>The same process in both languages:</p>
+        <div class="two-col" style="gap:1rem">
+          <figure class="listing" style="margin:0">
+            <figcaption><span>inc.occ</span><span>occam</span></figcaption>
+<pre class="occam">
+BYTE x:
+WHILE TRUE
+  SEQ
+    in ? x
+    out ! x PLUS 1
+</pre>
+          </figure>
+          <figure class="listing" style="margin:0">
+            <figcaption><span>inc.hcc</span><span>Handel-C</span></figcaption>
+<pre class="code">
+unsigned int 8 x;
+while (1)
+{
+    in ? x;
+    out ! x + 1;
+}
+</pre>
+          </figure>
+        </div>
+      </div>
+    </details>
+
+    <details class="fold" open id="fpga">
+      <summary><h2>Transputers in FPGA</h2></summary>
+      <div class="fold-body prose">
+        <p>Transputers are no longer made, but the design lives on in reconfigurable logic:</p>
+        <ul>
+          <li><strong>T42</strong>, a VHDL re-implementation of the T425 by Uwe Mielke and
+            colleagues: <em>T42 – Transputer Design in FPGA (Year Two Design Status Report)</em>, CPA 2016 (<a href="https://www.wotug.org/cpa2016/slides/31-slides.pdf">slides</a>,
+            <a href="https://ebooks.iospress.nl/volumearticle/51263">paper</a>);</li>
+          <li><a href="http://transputer.classiccmp.org/documentation/misc/TPCORE2.pdf"><em>Design of a
+            Transputer Core and its Implementation in an FPGA</em></a>;</li>
+          <li>Michael Brüstle's link-interface work (LINKUSB, VHDL link technical notes) on
+            <a href="https://www.transputer.net/tn/tn.asp">transputer.net</a>.</li>
+        </ul>
+        <p>Software emulators are another option. See <a href="{{root}}implementations.html#emulators">emulators</a>,
+          including one that runs in your browser.</p>
+      </div>
+    </details>
+
+    <details class="fold" open id="xmos">
+      <summary><h2>XMOS</h2></summary>
+      <div class="fold-body prose">
+        <p>XMOS was founded in Bristol in 2005, with transputer architect David May as a co-founder.
+          Its <strong>xCORE</strong> processors carry the transputer's ideas into the present:
+          hardware-scheduled threads, channel communication in the instruction set, and
+          event-driven I/O with deterministic timing. Its <strong>XC</strong> language adds
+          <code>par</code>, <code>chan</code> and <code>select</code> to C. It is the most direct
+          commercial descendant of occam.</p>
+        <p><a href="https://github.com/xmos">github.com/xmos</a> · <a href="https://en.wikipedia.org/wiki/XMOS">history</a></p>
+      </div>
+    </details>
+
+    <details class="fold" open id="resources">
+      <summary><h2>Resources</h2></summary>
+      <div class="fold-body prose">
+        <ul>
+          <li><a href="https://www.transputer.net/ibooks/ibooks.asp">Inmos databooks and manuals</a> (transputer.net)</li>
+          <li><a href="http://bitsavers.trailing-edge.com/components/inmos/transputer/">Transputer reference manual, databooks, datasheets</a> (bitsavers)</li>
+          <li><a href="https://www.transputer.net/tn/tn.asp">Inmos technical notes</a></li>
+          <li><a href="https://www.wotug.org/parallel/transputer/">IPCA transputer archive</a>: software, OSes, emulators, bibliographies</li>
+          <li><a href="https://www.computinghistory.org.uk/sec/7128/Inmos/">Inmos</a> at the Centre for Computing History</li>
+          <li><a href="https://www.geekdot.com/transputer/">geekdot</a>: hobbyist transputer hardware</li>
+          <li>occam on real transputer networks: <a href="https://github.com/machineroom/oc-ray">oc-ray</a> ray tracer, <a href="https://github.com/stepleton/flag">flag</a> simulation</li>
+        </ul>
+      </div>
+    </details>
+  </div>
+</div>

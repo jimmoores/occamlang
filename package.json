@@ -1,0 +1,11 @@
+{
+  "name": "occamlang.org",
+  "private": true,
+  "description": "Source for occamlang.org — history, implementations, tutorials and research archive for the occam language",
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs",
+    "check": "node build.mjs && node tools/check-links.mjs",
+    "serve": "node build.mjs && python3 -m http.server 8000 --directory dist"
+  }
+}

@@ -1,0 +1,109 @@
+<!--meta {"title": "Research archive", "description": "A searchable archive of occam, CSP and transputer research: foundational papers, reference manuals, WoTUG and CPA proceedings, and where to find them.", "section": "archive"} -->
+<header class="page-head">
+  <div class="wrap">
+    <span class="kicker">Archive</span>
+    <h1>Research archive</h1>
+    <p class="lede">Forty years of occam, CSP and transputer research is spread across old
+      university servers, the WoTUG site and personal archives. This page collects it in one
+      searchable place, and it is still growing.</p>
+  </div>
+</header>
+
+<div class="wrap">
+  <details class="fold" open id="papers">
+    <summary><h2>Key papers &amp; manuals</h2><span class="fold-hint count" id="paper-count"></span></summary>
+    <div class="fold-body">
+      <div class="archive-tools">
+        <input type="search" id="paper-q" placeholder="Search titles, authors, venues…" aria-label="Search the archive">
+        <div class="chips" id="paper-topics" role="group" aria-label="Filter by topic"></div>
+      </div>
+      <ol class="paper-list" id="paper-list" aria-live="polite"></ol>
+      <noscript><p>The paper list needs JavaScript. The raw data is in <a href="{{root}}assets/data/papers.js">papers.js</a>.</p></noscript>
+    </div>
+  </details>
+
+  <details class="fold" open id="collections">
+    <summary><h2>Collections &amp; mirrors</h2></summary>
+    <div class="fold-body">
+      <p class="muted" style="max-width:44rem">wotug.org is no longer maintained, but much of its
+        static content is still online, including directories that are not linked from its front
+        page. These are the most useful ones, along with mirrors elsewhere.</p>
+      <div class="card-grid" id="collections-list"></div>
+    </div>
+  </details>
+
+  <details class="fold" open id="rescue">
+    <summary><h2>Rebuilding the corpus</h2></summary>
+    <div class="fold-body prose">
+      <p>The goal is a permanent, citable corpus of occam-related papers. It should not depend on any
+        one university or society keeping a server running. The plan:</p>
+      <ol>
+        <li><strong>Index.</strong> Catalogue every paper in the WoTUG paper database and the IPCA,
+          with a stable ID, BibTeX and topic tags.</li>
+        <li><strong>Mirror.</strong> Where rights allow, keep a copy of each PDF here and deposit it
+          with the Internet Archive, so a dead link never loses a paper again.</li>
+        <li><strong>Connect.</strong> Link papers to the lessons, implementations and pages that
+          build on them.</li>
+      </ol>
+      <p>If you hold proceedings, theses, Inmos technical notes or course notes that are not
+        online, please <a href="{{root}}about.html#contribute">get in touch</a>.</p>
+    </div>
+  </details>
+</div>
+
+<script src="{{root}}assets/data/papers.js"></script>
+<script>
+(function () {
+  var papers = (window.OCCAM_PAPERS || []).slice().sort(function (a, b) { return a.year - b.year; });
+  var topics = ["all", "language", "csp", "implementation", "hardware", "design", "education", "manual"];
+  var active = "all";
+  var q = document.getElementById("paper-q");
+  var list = document.getElementById("paper-list");
+  var count = document.getElementById("paper-count");
+  var chips = document.getElementById("paper-topics");
+
+  function esc(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;"); }
+
+  topics.forEach(function (t) {
+    var b = document.createElement("button");
+    b.className = "chip"; b.type = "button"; b.textContent = t;
+    b.setAttribute("aria-pressed", t === active ? "true" : "false");
+    b.addEventListener("click", function () {
+      active = t;
+      chips.querySelectorAll(".chip").forEach(function (c) { c.setAttribute("aria-pressed", c === b ? "true" : "false"); });
+      render();
+    });
+    chips.appendChild(b);
+  });
+
+  function render() {
+    var terms = q.value.toLowerCase().split(/\s+/).filter(Boolean);
+    var shown = papers.filter(function (p) {
+      if (active !== "all" && p.topics.indexOf(active) < 0) return false;
+      var hay = (p.title + " " + p.authors + " " + p.venue + " " + p.year + " " + (p.note || "")).toLowerCase();
+      return terms.every(function (t) { return hay.indexOf(t) >= 0; });
+    });
+    list.innerHTML = shown.map(function (p) {
+      var links = Object.keys(p.links || {}).map(function (k) {
+        return '<a href="' + esc(p.links[k]) + '">' + esc(k) + " →</a>";
+      }).join("");
+      return '<li class="paper"><div class="yr">' + p.year + "</div><div>" +
+        '<div class="t">' + esc(p.title) + "</div>" +
+        '<div class="a">' + esc(p.authors) + ' · <span class="v">' + esc(p.venue) + "</span></div>" +
+        (p.note ? '<div class="n">' + esc(p.note) + "</div>" : "") +
+        '<div class="pl">' + p.topics.map(function (t) { return '<span class="tag">' + t + "</span>"; }).join("") + links + "</div>" +
+        "</div></li>";
+    }).join("") || '<li class="muted" style="padding:1rem 0">Nothing matches. Try another search.</li>';
+    count.textContent = shown.length + " of " + papers.length;
+  }
+  q.addEventListener("input", render);
+  render();
+
+  document.getElementById("collections-list").innerHTML = (window.OCCAM_COLLECTIONS || []).map(function (c) {
+    var more = Object.keys(c.more || {}).map(function (k) { return '<a href="' + esc(c.more[k]) + '">' + esc(k) + "</a>"; }).join("");
+    return '<div class="card"><span class="meta">' + esc(c.url.replace(/^https?:\/\//, "").replace(/\/$/, "")) + "</span>" +
+      '<h3><a href="' + esc(c.url) + '">' + esc(c.title) + "</a></h3><p>" + esc(c.text) + "</p>" +
+      (more ? '<div class="links">' + more + "</div>" : "") + "</div>";
+  }).join("");
+})();
+</script>

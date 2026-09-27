@@ -1,0 +1,295 @@
+<!--meta {"title": "Lesson 3: Legoland", "description": "Peter Welch's Legoland: tiny reusable occam processes (id, succ, plus, delta, prefix, tail) composed into numbers, integrate, pairs and Fibonacci.", "section": "learn"} -->
+<header class="page-head">
+  <div class="wrap narrow">
+    <span class="kicker">Lesson 3 of 4</span>
+    <h1>Legoland</h1>
+    <p class="lede">Peter Welch's classic: a box of tiny processes that snap together into networks
+      that count, sum and generate Fibonacci numbers, with no loops over state.</p>
+  </div>
+</header>
+
+<div class="wrap narrow">
+  <details class="fold" open id="bricks">
+    <summary><h2>The bricks</h2></summary>
+    <div class="fold-body prose">
+      <p>Each brick is a few lines, runs forever, and does one thing to a stream of integers.
+        <code>PLUS</code> is used instead of <code>+</code> so the streams wrap around instead of
+        failing on overflow.</p>
+      <figure class="listing">
+        <figcaption><span>legoland.occ</span><span>occam-π</span></figcaption>
+<pre class="occam">
+{{{ id -- copy input to output
+PROC id (CHAN INT in?, out!)
+  WHILE TRUE
+    INT x:
+    SEQ
+      in ? x
+      out ! x
+:
+}}}
+{{{ succ -- add one
+PROC succ (CHAN INT in?, out!)
+  WHILE TRUE
+    INT x:
+    SEQ
+      in ? x
+      out ! x PLUS 1
+:
+}}}
+{{{ plus -- add two streams
+PROC plus (CHAN INT in.0?, in.1?, out!)
+  WHILE TRUE
+    INT x.0, x.1:
+    SEQ
+      PAR
+        in.0 ? x.0
+        in.1 ? x.1
+      out ! x.0 PLUS x.1
+:
+}}}
+{{{ delta -- copy input to both outputs
+PROC delta (CHAN INT in?, out.0!, out.1!)
+  WHILE TRUE
+    INT x:
+    SEQ
+      in ? x
+      PAR
+        out.0 ! x
+        out.1 ! x
+:
+}}}
+{{{ prefix -- output n, then behave like id
+PROC prefix (VAL INT n, CHAN INT in?, out!)
+  SEQ
+    out ! n
+    id (in?, out!)
+:
+}}}
+{{{ tail -- drop the first value, then behave like id
+PROC tail (CHAN INT in?, out!)
+  INT any:
+  SEQ
+    in ? any
+    id (in?, out!)
+:
+}}}
+</pre>
+      </figure>
+      <p>Look at <code>plus</code> and <code>delta</code>. Each uses a small <code>PAR</code>
+        inside its loop, so it does not care which input arrives, or which reader is ready, first.
+        That is what makes the bricks safe to connect in any shape.</p>
+    </div>
+  </details>
+
+  <details class="fold" open id="numbers">
+    <summary><h2>numbers</h2></summary>
+    <div class="fold-body prose">
+      <p>Feed <code>succ</code>'s output back into its own input, seed the loop with
+        <code>prefix (0, ...)</code>, and tap the stream with <code>delta</code>:</p>
+      <div class="procnet">
+        <script type="application/json">
+        { "title": "numbers", "w": 640, "h": 290, "boundary": true, "animate": true,
+          "caption": "numbers: 0, 1, 2, 3, ... produced by a feedback loop.",
+          "nodes": [
+            { "id": "pre", "label": "prefix 0", "x": 180, "y": 110, "w": 120 },
+            { "id": "d", "label": "delta", "x": 420, "y": 110, "w": 110 },
+            { "id": "s", "label": "succ", "x": 300, "y": 220, "w": 110 }
+          ],
+          "chans": [
+            { "from": "pre", "to": "d", "label": "a" },
+            { "from": "d", "to": [626, 110], "label": "out" },
+            { "from": "d", "to": "s", "via": [[420, 220]], "label": "b", "at": [436, 170] },
+            { "from": "s", "to": "pre", "via": [[180, 220]], "label": "c", "at": [164, 170] }
+          ] }
+        </script>
+      </div>
+<pre class="occam">
+PROC numbers (CHAN INT out!)
+  CHAN INT a, b, c:
+  PAR
+    prefix (0, c?, a!)
+    delta (a?, out!, b!)
+    succ (b?, c!)
+:
+</pre>
+      <p>Every arrow in the diagram is a channel in the <code>CHAN</code> declaration, and every box
+        is one line of the <code>PAR</code>. The program keeps no counter: the count exists only
+        as the value moving around the loop.</p>
+    </div>
+  </details>
+
+  <details class="fold" open id="integrate">
+    <summary><h2>integrate</h2></summary>
+    <div class="fold-body prose">
+      <p>Replace <code>succ</code> with <code>plus</code> and bring in an external stream. The loop
+        now holds a <em>running total</em>:</p>
+      <div class="procnet">
+        <script type="application/json">
+        { "title": "integrate", "w": 640, "h": 290, "boundary": true, "animate": true,
+          "caption": "integrate: x0, x0+x1, x0+x1+x2, ...",
+          "nodes": [
+            { "id": "p", "label": "plus", "x": 200, "y": 110, "w": 110 },
+            { "id": "d", "label": "delta", "x": 420, "y": 110, "w": 110 },
+            { "id": "pre", "label": "prefix 0", "x": 310, "y": 220, "w": 120 }
+          ],
+          "chans": [
+            { "from": [14, 110], "to": "p", "label": "in" },
+            { "from": "p", "to": "d", "label": "a" },
+            { "from": "d", "to": [626, 110], "label": "out" },
+            { "from": "d", "to": "pre", "via": [[420, 220]], "label": "b", "at": [436, 170] },
+            { "from": "pre", "to": "p", "via": [[200, 220]], "label": "c", "at": [184, 170] }
+          ] }
+        </script>
+      </div>
+<pre class="occam">
+PROC integrate (CHAN INT in?, out!)
+  CHAN INT a, b, c:
+  PAR
+    plus (in?, c?, a!)
+    delta (a?, out!, b!)
+    prefix (0, b?, c!)
+:
+</pre>
+    </div>
+  </details>
+
+  <details class="fold" open id="pairs">
+    <summary><h2>pairs</h2></summary>
+    <div class="fold-body prose">
+      <p>Add each value to the one after it. Split the stream, drop the first value from one copy
+        with <code>tail</code>, and add the two streams back together:</p>
+      <div class="procnet">
+        <script type="application/json">
+        { "title": "pairs", "w": 640, "h": 260, "boundary": true, "animate": true,
+          "nodes": [
+            { "id": "d", "label": "delta", "x": 170, "y": 130, "w": 110 },
+            { "id": "t", "label": "tail", "x": 320, "y": 195, "w": 100 },
+            { "id": "p", "label": "plus", "x": 470, "y": 130, "w": 110 }
+          ],
+          "chans": [
+            { "from": [14, 130], "to": "d", "label": "in" },
+            { "from": "d", "to": "p", "via": [[170, 70], [470, 70]], "label": "a", "at": [320, 56] },
+            { "from": "d", "to": "t", "via": [[170, 195]], "label": "b", "at": [156, 170] },
+            { "from": "t", "to": "p", "via": [[470, 195]], "label": "c", "at": [484, 170] },
+            { "from": "p", "to": [626, 130], "label": "out" }
+          ] }
+        </script>
+      </div>
+<pre class="occam">
+PROC pairs (CHAN INT in?, out!)
+  CHAN INT a, b, c:
+  PAR
+    delta (in?, a!, b!)
+    tail (b?, c!)
+    plus (a?, c?, out!)
+:
+</pre>
+    </div>
+  </details>
+
+  <details class="fold" open id="run">
+    <summary><h2>Run it</h2></summary>
+    <div class="fold-body prose">
+      <p>Connect <code>numbers</code> to <code>integrate</code> and print the result. You get the
+        triangular numbers 0, 1, 3, 6, 10, 15, … Every process here runs forever, so stop the
+        program with Ctrl-C.</p>
+      <div class="procnet">
+        <script type="application/json">
+        { "title": "main", "w": 700, "h": 150, "animate": true, "boundary": true,
+          "caption": "Open numbers or integrate to see inside them.",
+          "nodes": [
+            { "id": "n", "label": "numbers", "x": 130, "y": 85, "w": 130,
+              "net": { "w": 640, "h": 290, "boundary": true, "animate": true,
+                "nodes": [
+                  { "id": "pre", "label": "prefix 0", "x": 180, "y": 110, "w": 120 },
+                  { "id": "d", "label": "delta", "x": 420, "y": 110, "w": 110 },
+                  { "id": "s", "label": "succ", "x": 300, "y": 220, "w": 110 }
+                ],
+                "chans": [
+                  { "from": "pre", "to": "d", "label": "a" },
+                  { "from": "d", "to": [626, 110], "label": "out" },
+                  { "from": "d", "to": "s", "via": [[420, 220]], "label": "b", "at": [436, 170] },
+                  { "from": "s", "to": "pre", "via": [[180, 220]], "label": "c", "at": [164, 170] }
+                ] } },
+            { "id": "i", "label": "integrate", "x": 350, "y": 85, "w": 140,
+              "net": { "w": 640, "h": 290, "boundary": true, "animate": true,
+                "nodes": [
+                  { "id": "p", "label": "plus", "x": 200, "y": 110, "w": 110 },
+                  { "id": "d", "label": "delta", "x": 420, "y": 110, "w": 110 },
+                  { "id": "pre", "label": "prefix 0", "x": 310, "y": 220, "w": 120 }
+                ],
+                "chans": [
+                  { "from": [14, 110], "to": "p", "label": "in" },
+                  { "from": "p", "to": "d", "label": "a" },
+                  { "from": "d", "to": [626, 110], "label": "out" },
+                  { "from": "d", "to": "pre", "via": [[420, 220]], "label": "b", "at": [436, 170] },
+                  { "from": "pre", "to": "p", "via": [[200, 220]], "label": "c", "at": [184, 170] }
+                ] } },
+            { "id": "pr", "label": "print", "x": 560, "y": 85, "w": 110 }
+          ],
+          "chans": [
+            { "from": "n", "to": "i", "label": "a" },
+            { "from": "i", "to": "pr", "label": "b" },
+            { "from": "pr", "to": [690, 85], "label": "screen", "at": [650, 70] }
+          ] }
+        </script>
+      </div>
+      <figure class="listing">
+        <figcaption><span>triangles.occ</span><span>occbuild --program triangles.occ</span></figcaption>
+<pre class="occam">
+#INCLUDE "course.module"
+
+{{{! the Legoland bricks, numbers and integrate
+-- (paste the definitions from above here)
+}}}
+
+PROC print (CHAN INT in?, CHAN BYTE out!)
+  WHILE TRUE
+    INT n:
+    SEQ
+      in ? n
+      out.int (n, 10, out!)
+      out ! '*n'
+:
+
+PROC main (CHAN BYTE screen!)
+  CHAN INT a, b:
+  PAR
+    numbers (a!)
+    integrate (a?, b!)
+    print (b?, screen!)
+:
+</pre>
+      </figure>
+    </div>
+  </details>
+
+  <div class="exercise">
+    <strong>Exercise: Fibonacci</strong>
+    Build a network that outputs 0, 1, 1, 2, 3, 5, 8, … using only <code>prefix</code>,
+    <code>delta</code> and <code>pairs</code>. Hint: two <code>prefix</code>es in a loop. Sketch
+    the diagram first.
+    <details class="fold flat" style="margin-top:.75rem">
+      <summary><strong>solution</strong></summary>
+      <div class="fold-body">
+<pre class="occam">
+PROC fibonacci (CHAN INT out!)
+  CHAN INT a, b, c, d:
+  PAR
+    prefix (1, d?, a!)
+    prefix (0, a?, b!)
+    delta (b?, out!, c!)
+    pairs (c?, d!)
+:
+</pre>
+        <p>Stream <code>b</code> is 0, 1, 1, 2, 3, …; <code>pairs</code> turns it into 1, 2, 3,
+          5, …; the two <code>prefix</code>es put 0 and 1 in front, which closes the loop.</p>
+      </div>
+    </details>
+  </div>
+
+  <nav class="lesson-nav">
+    <a href="channels.html"><span class="dir">← lesson 2</span>Processes &amp; channels</a>
+    <a href="alt.html" style="text-align:right"><span class="dir">lesson 4 →</span>Choice &amp; time</a>
+  </nav>
+</div>

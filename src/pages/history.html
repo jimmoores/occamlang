@@ -1,0 +1,249 @@
+<!--meta {"title": "History & foundations", "description": "The history of occam: Inmos, David May, Tony Hoare's CSP, the transputer, folding editors, occam 2, occam 2.1, occam-pi and the language's descendants.", "section": "history"} -->
+<header class="page-head">
+  <div class="wrap">
+    <span class="kicker">History &amp; foundations</span>
+    <h1>Where occam came from</h1>
+    <p class="lede">A language built for a chip and derived from an algebra. This page tells the
+      story, from Hoare's 1978 paper to the compilers you can download today.</p>
+  </div>
+</header>
+
+<div class="wrap page-layout">
+  <nav class="toc" aria-label="On this page">
+    <span class="kicker">Contents</span>
+    <a href="#origins">Origins at Inmos</a>
+    <a href="#csp">The CSP foundation</a>
+    <a href="#timeline">Timeline</a>
+    <a href="#versions">Language versions</a>
+    <a href="#folding">Folding editors</a>
+    <a href="#diagrams">Process diagrams</a>
+    <a href="#legacy">Descendants</a>
+    <div class="fold-tools">
+      <button class="btn small ghost" data-fold="open">open all</button>
+      <button class="btn small ghost" data-fold="close">close all</button>
+    </div>
+  </nav>
+
+  <div>
+    <details class="fold" open id="origins">
+      <summary><h2>Origins at Inmos</h2></summary>
+      <div class="fold-body prose">
+        <p>Inmos was founded in Bristol in 1978 with backing from the British government. Its plan
+          was to build a new kind of microprocessor, the <strong>transputer</strong>: a complete
+          computer on one chip, with processor, memory and serial communication links, designed so
+          that many of them could be wired together into one parallel machine.</p>
+        <p>Such a machine needed a language that treated concurrency and communication as
+          basic operations, not as library calls added later. <strong>David May</strong> led the
+          design of that language at Inmos, with <strong>Tony Hoare</strong> as a consultant. The
+          result was released in 1983 and named <strong>occam</strong> after William of Ockham, the
+          fourteenth-century friar whose "razor" says that entities should not be multiplied beyond
+          necessity.</p>
+        <p>The name fits. occam 1 had a small set of primitive processes (assignment, input, output,
+          <code>SKIP</code>, <code>STOP</code>) and a few constructors (<code>SEQ</code>,
+          <code>PAR</code>, <code>ALT</code>, <code>IF</code>, <code>WHILE</code>). The language and
+          the transputer were designed together, so a channel communication in a program became
+          one or two machine instructions on the chip.</p>
+        <div class="note"><strong>Primary sources.</strong> The earliest surviving design document,
+          <em>Proto-occam</em> (July 1983), is among the
+          <a href="https://www.transputer.net/obooks/obooks.asp">occam books on transputer.net</a>.
+          Inmos Technical Note 8, <a href="https://www.transputer.net/obooks/itn8/itn8.pdf"><em>The
+          Implementation of occam on the IMS T414</em></a> (1985), shows how the language mapped onto
+          the silicon.</div>
+      </div>
+    </details>
+
+    <details class="fold" open id="csp">
+      <summary><h2>The CSP foundation</h2></summary>
+      <div class="fold-body prose">
+        <p>In 1978 Hoare published <a href="https://dl.acm.org/doi/10.1145/359576.359585"><em>Communicating
+          Sequential Processes</em></a> in <em>Communications of the ACM</em>. It proposed that input
+          and output are primitive operations, that parallel composition of sequential processes is
+          the way to structure programs, and that processes communicate by synchronised message passing
+          with guarded choice between alternatives.</p>
+        <p>Through the early 1980s, Hoare, Stephen Brookes and Bill Roscoe at Oxford turned CSP into a
+          mathematical theory. The <em>failures</em> model (JACM, 1984) and then the
+          failures-divergences model gave precise meanings to deadlock, livelock and refinement.
+          Hoare's 1985 book, <a href="http://web.archive.org/web/20231231101005/http://www.usingcsp.com/cspbook.pdf"><em>Communicating
+          Sequential Processes</em></a>, set out the theory in full.</p>
+        <p>occam is close to a concrete syntax for CSP. The correspondence is:</p>
+        <div class="table-wrap"><table>
+          <thead><tr><th>occam</th><th>CSP</th><th>meaning</th></tr></thead>
+          <tbody>
+            <tr><td><code>c ! e</code> / <code>c ? x</code></td><td><code>c!e → P</code> / <code>c?x → P</code></td><td>synchronised output / input</td></tr>
+            <tr><td><code>SEQ</code></td><td><code>P ; Q</code></td><td>sequential composition</td></tr>
+            <tr><td><code>PAR</code></td><td><code>P || Q</code></td><td>parallel composition, synchronising on shared channels</td></tr>
+            <tr><td><code>ALT</code></td><td><code>P □ Q</code></td><td>external choice between guarded alternatives</td></tr>
+            <tr><td><code>STOP</code> / <code>SKIP</code></td><td><code>STOP</code> / <code>SKIP</code></td><td>deadlock / successful termination</td></tr>
+          </tbody>
+        </table></div>
+        <p>Because of this correspondence, occam programs obey algebraic laws. Roscoe and Hoare's
+          <em>The Laws of occam Programming</em> (1988) gives a set of equations, such as the
+          associativity of <code>PAR</code> and the distribution of <code>SEQ</code> over
+          <code>IF</code>, that is complete enough to reduce any finite occam program to a normal form.
+          Inmos used this kind of reasoning in practice: the T800's floating-point unit was verified
+          using formal methods, one of the first industrial uses of formal methods on hardware.</p>
+        <p><a href="{{root}}csp.html">More on CSP, refinement and model checking with FDR →</a></p>
+      </div>
+    </details>
+
+    <details class="fold" open id="timeline">
+      <summary><h2>Timeline</h2></summary>
+      <div class="fold-body">
+        <ol class="timeline">
+          <li><span class="yr">1978</span>Hoare's CSP paper published in CACM. Inmos founded.</li>
+          <li><span class="yr">1983</span>occam released by Inmos. <em>Proto-occam</em> design document (July).</li>
+          <li><span class="yr">1984</span>Brookes, Hoare and Roscoe publish the failures model of CSP. <em>occam Programming Manual</em> published by Prentice Hall.</li>
+          <li><span class="yr">1985</span>Hoare's CSP book. The IMS T414 transputer launches (October).</li>
+          <li><span class="yr">1987</span>occam 2 adds data types, floating point and protocols. The T800 adds an on-chip FPU.</li>
+          <li><span class="yr">1988</span><em>occam 2 Reference Manual</em> published. Roscoe &amp; Hoare, <em>The Laws of occam Programming</em>.</li>
+          <li><span class="yr">1989</span>SGS-Thomson acquires Inmos.</li>
+          <li><span class="yr">1991</span>Page &amp; Luk, <em>Compiling occam into FPGAs</em>, the paper Handel grew out of.</li>
+          <li><span class="yr">1992</span>Geoff Barrett's draft <em>occam 3 Reference Manual</em> (31 March).</li>
+          <li><span class="yr">1994</span>occam 2.1 defined. SPoC v1.1 released at Southampton.</li>
+          <li><span class="yr">1995</span><em>occam 2.1 Reference Manual</em> (SGS-Thomson, May).</li>
+          <li><span class="yr">1997</span>KRoC 0.9β from the <em>occam For All</em> project at Kent and Keele. Roscoe, <em>The Theory and Practice of Concurrency</em>.</li>
+          <li><span class="yr">2000s</span>occam-π adds mobile data, channels and processes, barriers and dynamic process creation. The Transterpreter brings occam to robots and small devices.</li>
+          <li><span class="yr">2005</span>XMOS founded in Bristol, with David May as a co-founder.</li>
+          <li><span class="yr">2006</span>KRoC 1.4.0.</li>
+          <li><span class="yr">2009</span>Go announced. Its FAQ names occam as a fellow descendant of CSP.</li>
+          <li><span class="yr">2014</span>FDR3 refinement checker (Oxford).</li>
+          <li><span class="yr">today</span>Razor modernises KRoC for 64-bit macOS and Linux. occamlang.org launches.</li>
+        </ol>
+      </div>
+    </details>
+
+    <details class="fold" open id="versions">
+      <summary><h2>Language versions</h2></summary>
+      <div class="fold-body prose">
+        <p><strong>occam 1</strong> (1983) had one data type, the word-sized integer, and untyped
+          channels. It was deliberately minimal.</p>
+        <p><strong>occam 2</strong> (1987) made it a practical systems language. It added typed
+          channels with <em>protocols</em>, <code>BYTE</code>, <code>BOOL</code>, fixed-width integers
+          and IEEE floating point, arrays, functions and <code>VALOF</code>, and the usage rules that
+          let the compiler reject aliasing and parallel write conflicts.</p>
+        <p><strong>occam 2.1</strong> (1994) added named data types, records, <code>RETYPES</code> and
+          <code>RESHAPES</code>, and other conveniences. It is the last version standardised by the
+          chip vendor (<a href="https://www.wotug.org/occam/documentation/oc21refman.pdf">reference
+          manual, PDF</a>).</p>
+        <p><strong>occam 3</strong> was a larger redesign, drafted by Geoff Barrett in 1992. It
+          included shared channels (<em>call channels</em>), modules and libraries, and user-defined
+          types. It was never fully implemented, but many of its ideas returned in occam-π.
+          (<a href="https://www.wotug.org/occam/documentation/oc3refman.pdf">draft manual, PDF</a>)</p>
+        <p><strong>occam-π</strong> (2000s), developed mainly by Peter Welch and Fred Barnes at
+          Kent, adds ideas from Milner's π-calculus to occam 2.1: mobile data and channel ends, dynamic
+          process creation with <code>FORK</code>, <code>BARRIER</code>s, shared channels with
+          <code>CLAIM</code>, and recursion. Its compiler checks these features so they keep the
+          language's safety guarantees.</p>
+        <p><a href="{{root}}implementations.html#versions">Compare the versions in detail →</a></p>
+      </div>
+    </details>
+
+    <details class="fold" open id="folding">
+      <summary><h2>Folding editors</h2></summary>
+      <div class="fold-body prose">
+        <p>occam programmers at Inmos usually worked in a <strong>folding editor</strong>. The
+          <em>Transputer Development System</em> (TDS) had no separate file browser. The whole
+          program was one hierarchy of folds: a closed fold appeared as a single line
+          <code>... comment</code>. You entered it to see its contents, which ran from a
+          <code>{{{</code> line to a <code>}}}</code> line. Because occam uses indentation for
+          structure, a fold is always a complete process or declaration. That made folds a natural
+          unit for thinking about a program as well as for editing it.</p>
+        <p>This site uses the same convention. Each section is a fold, and so is each code
+          listing that contains <code>...</code> lines. Try it:</p>
+<pre class="occam">
+PROC server (CHAN INT in?, out!)
+  {{{! local state
+  [100]INT table:
+  INT count:
+  }}}
+  SEQ
+    {{{! initialise
+    count := 0
+    SEQ i = 0 FOR SIZE table
+      table[i] := 0
+    }}}
+    WHILE TRUE
+      {{{ serve one request
+      INT n:
+      SEQ
+        in ? n
+        out ! table[n]
+      }}}
+:
+</pre>
+        <p>The idea outlived the TDS. Later occam editors (the <em>origami</em> folding editor) and
+          fold modes for Emacs and Vim kept the <code>{{{ }}}</code> markers, and they are still the
+          default fold markers in Vim. WoTUG kept a page on
+          <a href="https://www.wotug.org/occam/folding.shtml">folding editors</a>.</p>
+      </div>
+    </details>
+
+    <details class="fold" open id="diagrams">
+      <summary><h2>Process diagrams</h2></summary>
+      <div class="fold-body prose">
+        <p>occam people design with pictures. In the style Peter Welch developed for teaching at
+          Kent, each <strong>process is a box</strong> and each <strong>channel is an arrow</strong>
+          from writer to reader. A box can hold a whole network of processes, so diagrams nest the way
+          folds do. The picture maps directly onto a <code>PAR</code> of instances wired together by
+          channel declarations, so you can write the code straight from the diagram.</p>
+        <div class="procnet">
+          <script type="application/json">
+          { "title": "integrate", "w": 620, "h": 250, "animate": true,
+            "caption": "integrate: running sum of its input. Open it to see plus, delta and prefix.",
+            "nodes": [
+              { "id": "i", "label": "integrate", "x": 310, "y": 125, "w": 170, "h": 64,
+                "net": { "w": 620, "h": 300, "boundary": true, "animate": true,
+                  "nodes": [
+                    { "id": "p", "label": "+", "shape": "circle", "w": 56, "x": 190, "y": 110 },
+                    { "id": "d", "label": "δ", "shape": "circle", "w": 56, "x": 400, "y": 110 },
+                    { "id": "pre", "label": "0", "shape": "circle", "w": 56, "x": 295, "y": 220 }
+                  ],
+                  "chans": [
+                    { "from": [18, 110], "to": "p", "label": "in" },
+                    { "from": "p", "to": "d", "label": "a" },
+                    { "from": "d", "to": [602, 110], "label": "out" },
+                    { "from": "d", "to": "pre", "via": [[400, 220]], "label": "b", "at": [414, 180] },
+                    { "from": "pre", "to": "p", "via": [[190, 220]], "label": "c", "at": [176, 180] }
+                  ] } }
+            ],
+            "chans": [
+              { "from": [30, 125], "to": "i", "label": "in" },
+              { "from": "i", "to": [590, 125], "label": "out" }
+            ] }
+          </script>
+        </div>
+        <p>Welch's "Legoland" (small, reusable processes such as <code>id</code>, <code>succ</code>,
+          <code>plus</code>, <code>delta</code> and <code>prefix</code>, composed into
+          <code>numbers</code>, <code>integrate</code> and <code>pairs</code>) is still one of the best
+          introductions to concurrent design.
+          <a href="{{root}}learn/legoland.html">Work through it here →</a></p>
+        <p>His lecture notes also had a recognisable handwritten style: occam keywords written in
+          lower case and <u>underlined</u> rather than capitalised. The <kbd>SEQ</kbd>/<kbd>seq</kbd>
+          button in the header shows every listing on this site in that style.</p>
+      </div>
+    </details>
+
+    <details class="fold" open id="legacy">
+      <summary><h2>Descendants</h2></summary>
+      <div class="fold-body prose">
+        <ul>
+          <li><strong>XMOS xCORE and XC.</strong> David May co-founded XMOS in 2005. Its
+            multi-threaded processors have hardware channels and events, and its XC language brings
+            occam's model to C.</li>
+          <li><strong>Go.</strong> Goroutines, channels and <code>select</code> come from the same
+            CSP line as occam. <a href="https://go.dev/doc/faq">The Go FAQ</a> names occam and
+            Erlang as "two well known languages that stem from CSP". Rob Pike's route to Go ran
+            through Newsqueak, Alef and Limbo (<a href="https://swtch.com/~rsc/thread/">Russ Cox's
+            history</a>).</li>
+          <li><strong>JCSP, C++CSP, PyCSP and others.</strong> CSP process libraries for mainstream
+            languages, many developed by the WoTUG/CPA community.</li>
+          <li><strong>Handel-C.</strong> occam's model compiled directly to hardware. See
+            <a href="{{root}}hardware.html#handel">hardware</a>.</li>
+        </ul>
+        <p>For a wide survey, see Øyvind Teig's
+          <a href="https://www.teigfam.net/oyvind/home/technology/135-towards-a-taxonomy-of-csp-based-systems/">taxonomy
+          of CSP-based systems</a>.</p>
+      </div>
+    </details>
+  </div>
+</div>

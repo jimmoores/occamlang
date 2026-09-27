@@ -1,0 +1,225 @@
+<!--meta {"title": "CSP & model checking", "description": "Communicating Sequential Processes, the mathematical basis of occam: traces, failures and divergences, refinement, and model checking with FDR.", "section": "csp"} -->
+<header class="page-head">
+  <div class="wrap">
+    <span class="kicker">CSP research</span>
+    <h1>The algebra underneath</h1>
+    <p class="lede">Communicating Sequential Processes is a mathematical theory of concurrent
+      systems. It is why occam programs can be proved correct and why their designs can be checked
+      automatically before any code runs.</p>
+  </div>
+</header>
+
+<div class="wrap page-layout">
+  <nav class="toc" aria-label="On this page">
+    <span class="kicker">Contents</span>
+    <a href="#primer">A CSP primer</a>
+    <a href="#models">Semantic models</a>
+    <a href="#refinement">Refinement</a>
+    <a href="#fdr">Model checking with FDR</a>
+    <a href="#occam-csp">From occam to CSP</a>
+    <a href="#tools">Tools</a>
+    <a href="#reading">Reading</a>
+    <div class="fold-tools">
+      <button class="btn small ghost" data-fold="open">open all</button>
+      <button class="btn small ghost" data-fold="close">close all</button>
+    </div>
+  </nav>
+  <div>
+    <details class="fold" open id="primer">
+      <summary><h2>A CSP primer</h2></summary>
+      <div class="fold-body prose">
+        <p>In CSP a <em>process</em> is described by the <em>events</em> it can take part in. An event
+          happens only when every process that has it in its alphabet agrees to it. That is the
+          synchronisation behind occam's channels.</p>
+        <div class="table-wrap"><table>
+          <thead><tr><th>notation</th><th>reads as</th></tr></thead>
+          <tbody>
+            <tr><td><code>a → P</code></td><td>take part in <code>a</code>, then behave like <code>P</code> (prefix)</td></tr>
+            <tr><td><code>c!v → P</code>, <code>c?x → P(x)</code></td><td>output <code>v</code> on channel <code>c</code>; input a value and bind it to <code>x</code></td></tr>
+            <tr><td><code>P □ Q</code></td><td>external choice: the environment chooses (occam <code>ALT</code>)</td></tr>
+            <tr><td><code>P ⊓ Q</code></td><td>internal choice: the process chooses nondeterministically</td></tr>
+            <tr><td><code>P ‖<sub>A</sub> Q</code></td><td>parallel, synchronising on the events in <code>A</code> (occam <code>PAR</code>)</td></tr>
+            <tr><td><code>P \ A</code></td><td>hiding: the events in <code>A</code> become internal (occam's local channel declaration)</td></tr>
+            <tr><td><code>STOP</code>, <code>SKIP</code></td><td>deadlock; successful termination</td></tr>
+          </tbody>
+        </table></div>
+        <p>A one-place buffer is <code>COPY = left?x → right!x → COPY</code>. The occam version is
+          almost a transliteration:</p>
+<pre class="occam">
+PROC copy (CHAN INT left?, right!)
+  WHILE TRUE
+    INT x:
+    SEQ
+      left ? x
+      right ! x
+:
+</pre>
+      </div>
+    </details>
+
+    <details class="fold" open id="models">
+      <summary><h2>Semantic models</h2></summary>
+      <div class="fold-body prose">
+        <p>CSP has a hierarchy of <em>denotational models</em>. Each one records a different amount of
+          what can be observed about a process:</p>
+        <ul>
+          <li><strong>Traces</strong> (<em>T</em>): the finite sequences of events a process can
+            perform. Enough for <em>safety</em> properties ("nothing bad happens").</li>
+          <li><strong>Stable failures</strong> (<em>F</em>): traces paired with the sets of events the
+            process can refuse afterwards. Enough to capture <em>deadlock</em> and to tell external
+            choice apart from internal choice.</li>
+          <li><strong>Failures-divergences</strong> (<em>FD</em>): adds the traces after which a
+            process can perform internal actions forever (<em>livelock</em>). This is the standard
+            model for proving that a system is live.</li>
+        </ul>
+        <p>Brookes, Hoare and Roscoe introduced the failures model in 1984. Roscoe's books develop the
+          full hierarchy, including infinite-trace models and the algebraic and operational
+          semantics that match the denotational ones.</p>
+      </div>
+    </details>
+
+    <details class="fold" open id="refinement">
+      <summary><h2>Refinement</h2></summary>
+      <div class="fold-body prose">
+        <p>Specification and implementation are written in the same language. <code>Spec ⊑ Impl</code>
+          ("<em>Impl</em> refines <em>Spec</em>") means every behaviour of the implementation is allowed
+          by the specification in the chosen model. Refinement is compositional: refining one
+          component of a parallel network refines the whole network. You can therefore design
+          top-down, replacing an abstract process with a network of simpler ones and proving each
+          step. That is the same nesting you see in folds and process diagrams.</p>
+      </div>
+    </details>
+
+    <details class="fold" open id="fdr">
+      <summary><h2>Model checking with FDR</h2></summary>
+      <div class="fold-body prose">
+        <p><strong>FDR</strong> (Failures-Divergences Refinement) is the standard refinement checker
+          for CSP. It was first developed by Formal Systems (Europe) Ltd. FDR2 was the version the
+          occam and CPA community used for years. FDR3 was a rewrite at Oxford (TACAS 2014). The
+          current version, <a href="https://cocotec.io/fdr/">FDR4</a>, is maintained by Cocotec and
+          is free for academic use.</p>
+        <p>FDR reads <em>CSP<sub>M</sub></em>, a machine-readable dialect of CSP with a functional
+          expression language. Here two one-place buffers joined by a hidden channel are checked
+          against the specification of a two-place buffer:</p>
+        <figure class="listing">
+          <figcaption><span>buffer.csp</span><span>CSP<sub>M</sub> · FDR4</span></figcaption>
+<pre class="code">
+channel left, mid, right : {0..2}
+
+COPY(a, b) = a?x -> b!x -> COPY(a, b)
+
+-- Implementation: two COPYs in a pipeline, with the middle channel hidden
+SYSTEM = (COPY(left, mid) [| {| mid |} |] COPY(mid, right)) \ {| mid |}
+
+-- Specification: a FIFO buffer holding at most two values
+BUFF(<>)     = left?x -> BUFF(<x>)
+BUFF(<y>)    = left?x -> BUFF(<y, x>) [] right!y -> BUFF(<>)
+BUFF(<y, z>) = right!y -> BUFF(<z>)
+
+assert BUFF(<>) [FD= SYSTEM
+assert SYSTEM :[deadlock free [F]]
+assert SYSTEM :[divergence free]
+</pre>
+        </figure>
+        <p>All three assertions pass. If you change <code>COPY</code> to swallow a value (say
+          <code>a?x -> COPY(a, b)</code>), FDR reports a counterexample trace. It is the shortest
+          sequence of events that breaks the specification, and it is often the fastest way to
+          understand a concurrency bug.</p>
+        <p>This is how FDR is typically used on occam designs. Peter Welch and Jeremy Martin modelled
+          Java's monitor primitives (<code>synchronized</code>, <code>wait</code>, <code>notify</code>)
+          in CSP. They then used FDR to show that JCSP's implementations of channels and the
+          alternative construct, built from those primitives, refine their CSP specifications. The
+          result was a provably correct CSP library for Java (CPA 2000). FDR has also been used to verify occam-π barriers, protocol stacks and
+          deadlock-freedom design rules such as client-server and I/O-par.</p>
+      </div>
+    </details>
+
+    <details class="fold" open id="occam-csp">
+      <summary><h2>From occam to CSP</h2></summary>
+      <div class="fold-body prose">
+        <p>Each occam construct has a CSP meaning, and <em>The Laws of occam Programming</em>
+          (Roscoe &amp; Hoare, 1988) gives the algebra directly on occam syntax. Some examples:</p>
+<p class="law-title"><code>PAR</code> is associative and commutative</p>
+        <div class="law">
+<pre class="occam" data-nocopy>
+PAR
+  P
+  Q
+</pre>
+          <span class="law-eq">=</span>
+<pre class="occam" data-nocopy>
+PAR
+  Q
+  P
+</pre>
+        </div>
+        <p class="law-title"><code>SKIP</code> is the unit of <code>SEQ</code></p>
+        <div class="law">
+<pre class="occam" data-nocopy>
+SEQ
+  SKIP
+  P
+</pre>
+          <span class="law-eq">=</span>
+<pre class="occam" data-nocopy>
+P
+</pre>
+        </div>
+        <p class="law-title">a conditional distributes through a following <code>SEQ</code></p>
+        <div class="law">
+<pre class="occam" data-nocopy>
+SEQ
+  IF
+    b
+      P
+    TRUE
+      Q
+  R
+</pre>
+          <span class="law-eq">=</span>
+<pre class="occam" data-nocopy>
+IF
+  b
+    SEQ
+      P
+      R
+  TRUE
+    SEQ
+      Q
+      R
+</pre>
+        </div>
+        <p>Laws like these are sound in the failures-divergences model and complete for the finite
+          language. They justified the program transformations used in the Inmos compiler, and they
+          remain a good example of a programming language designed together with its semantics.</p>
+      </div>
+    </details>
+
+    <details class="fold" open id="tools">
+      <summary><h2>Tools</h2></summary>
+      <div class="fold-body">
+        <div class="card-grid">
+          <div class="card"><span class="meta">refinement checker</span><h3>FDR4</h3><p>The reference CSP<sub>M</sub> checker. It checks refinement in the traces, failures and failures-divergences models.</p><div class="links"><a href="https://cocotec.io/fdr/">cocotec.io/fdr</a><a href="https://cocotec.io/fdr/manual/">manual</a></div></div>
+          <div class="card"><span class="meta">historical</span><h3>FDR2 &amp; Oxford tools</h3><p>The Oxford concurrency tools pages, the historical home of FDR2, ProBE and related tools.</p><div class="links"><a href="https://www.cs.ox.ac.uk/projects/concurrency-tools/">cs.ox.ac.uk</a><a href="https://www.cs.ox.ac.uk/projects/fdr/">FDR project</a></div></div>
+          <div class="card"><span class="meta">animator &amp; checker</span><h3>ProB</h3><p>Animation and LTL model checking. Supports CSP<sub>M</sub> alongside B and Event-B.</p><div class="links"><a href="https://prob.hhu.de/w/index.php?title=CSP-M">CSP-M in ProB</a></div></div>
+          <div class="card"><span class="meta">model checker</span><h3>PAT</h3><p>Process Analysis Toolkit from NUS, with a CSP# modelling language.</p><div class="links"><a href="https://pat.comp.nus.edu.sg/">pat.comp.nus.edu.sg</a></div></div>
+        </div>
+      </div>
+    </details>
+
+    <details class="fold" open id="reading">
+      <summary><h2>Reading</h2></summary>
+      <div class="fold-body prose">
+        <ul>
+          <li>C.A.R. Hoare, <a href="https://dl.acm.org/doi/10.1145/359576.359585">"Communicating Sequential Processes"</a>, <em>CACM</em> 21(8), 1978 (<a href="https://www.cs.cmu.edu/~crary/819-f09/Hoare78.pdf">PDF</a>).</li>
+          <li>C.A.R. Hoare, <a href="http://web.archive.org/web/20231231101005/http://www.usingcsp.com/cspbook.pdf"><em>Communicating Sequential Processes</em></a>, Prentice Hall, 1985. The free electronic edition.</li>
+          <li>A.W. Roscoe, <a href="https://www.cs.ox.ac.uk/bill.roscoe/publications/68b.pdf"><em>The Theory and Practice of Concurrency</em></a>, 1997 (revised 2005). Full PDF.</li>
+          <li>A.W. Roscoe, <a href="https://www.cs.ox.ac.uk/ucs/"><em>Understanding Concurrent Systems</em></a>, Springer, 2010.</li>
+          <li>S.D. Brookes, C.A.R. Hoare, A.W. Roscoe, "A Theory of Communicating Sequential Processes", <em>JACM</em> 31(3), 1984.</li>
+          <li>A.W. Roscoe, C.A.R. Hoare, "The Laws of occam Programming", <em>Theoretical Computer Science</em> 60, 1988.</li>
+        </ul>
+        <p>More papers, including decades of <em>Communicating Process Architectures</em> proceedings, are in the <a href="{{root}}archive.html">archive</a>.</p>
+      </div>
+    </details>
+  </div>
+</div>

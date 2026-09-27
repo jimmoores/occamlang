@@ -1,0 +1,151 @@
+<!--meta {"title": "Lesson 2: processes & channels", "description": "occam PAR and channels: synchronous message passing, why occam has no data races, and how deadlock happens.", "section": "learn"} -->
+<header class="page-head">
+  <div class="wrap narrow">
+    <span class="kicker">Lesson 2 of 4</span>
+    <h1>Processes &amp; channels</h1>
+    <p class="lede">Run things at the same time and let them talk. This is the core of occam.</p>
+  </div>
+</header>
+
+<div class="wrap narrow">
+  <details class="fold" open id="par">
+    <summary><h2>PAR</h2></summary>
+    <div class="fold-body prose">
+      <p><code>PAR</code> runs its components <strong>at the same time</strong>, and finishes only
+        when all of them have finished:</p>
+<pre class="occam">
+PAR
+  x := f (a)
+  y := g (b)
+</pre>
+      <p>The compiler checks the <strong>usage rules</strong>. A variable assigned in one branch of a
+        <code>PAR</code> must not be read or written in any other branch. Change the second line to
+        <code>y := g (x)</code> and the program does not compile. Data races are compile-time errors
+        in occam, not bugs you find later.</p>
+    </div>
+  </details>
+
+  <details class="fold" open id="channels">
+    <summary><h2>Channels</h2></summary>
+    <div class="fold-body prose">
+      <p>So how do parallel processes share information? Over <strong>channels</strong>.
+        <code>c ! e</code> sends the value of <code>e</code>; <code>c ? x</code> receives into
+        <code>x</code>. A channel is:</p>
+      <ul>
+        <li><strong>synchronous</strong>: the sender waits for the receiver and the receiver
+          waits for the sender. The value passes at the moment both are ready, with no buffering;</li>
+        <li><strong>point-to-point</strong>: exactly one process writes and one reads;</li>
+        <li><strong>typed</strong>: <code>CHAN INT</code>, <code>CHAN BYTE</code>, or a
+          <code>PROTOCOL</code> for structured messages.</li>
+      </ul>
+      <div class="procnet">
+        <script type="application/json">
+        { "title": "main", "w": 640, "h": 170, "animate": true, "boundary": true,
+          "nodes": [
+            { "id": "p", "label": "producer", "x": 150, "y": 95, "w": 140 },
+            { "id": "c", "label": "consumer", "x": 400, "y": 95, "w": 140 }
+          ],
+          "chans": [
+            { "from": "p", "to": "c", "label": "c" },
+            { "from": "c", "to": [628, 95], "label": "screen" }
+          ] }
+        </script>
+      </div>
+      <figure class="listing">
+        <figcaption><span>squares.occ</span><span>occam-π</span></figcaption>
+<pre class="occam">
+#INCLUDE "course.module"
+
+PROC producer (CHAN INT out!)
+  SEQ i = 1 FOR 10
+    out ! i * i
+:
+
+PROC consumer (CHAN INT in?, CHAN BYTE screen!)
+  SEQ i = 1 FOR 10
+    INT n:
+    SEQ
+      in ? n
+      out.int (n, 5, screen!)
+      screen ! '*n'
+:
+
+PROC main (CHAN BYTE screen!)
+  CHAN INT c:
+  PAR
+    producer (c!)
+    consumer (c?, screen!)
+:
+</pre>
+      </figure>
+      <p>The <code>main</code> process is exactly the diagram. It declares the channel
+        <code>c</code> and runs the two processes in <code>PAR</code>, giving one the writing end
+        (<code>c!</code>) and the other the reading end (<code>c?</code>). Each diagram box is a
+        process instance, and each arrow is a channel declaration.</p>
+    </div>
+  </details>
+
+  <details class="fold" open id="deadlock">
+    <summary><h2>Your first deadlock</h2></summary>
+    <div class="fold-body prose">
+      <p>Synchronous communication means processes can wait for each other forever. The classic
+        case is two processes that each insist on sending first:</p>
+<pre class="occam">
+CHAN INT a, b:
+PAR
+  INT x:
+  SEQ
+    a ! 1          -- waits for someone to read a ...
+    b ? x
+  INT y:
+  SEQ
+    b ! 2          -- ... while this waits for someone to read b
+    a ? y
+</pre>
+      <p>Neither output can complete, so nothing happens. KRoC and Razor detect that every process
+        is blocked and report the deadlock. Two ways to fix it:</p>
+      <ul>
+        <li>reorder one side, so it receives first, then sends;</li>
+        <li>do both halves in parallel: <code>PAR (a ! 1, b ? x)</code>, written one per line.</li>
+      </ul>
+      <p>Deadlock is not a mysterious run-time accident in occam. It is a property of the process
+        network, and you can design it out with patterns such as <em>client-server</em> and
+        <em>I/O-PAR</em>, or prove it absent with <a href="{{root}}csp.html#fdr">FDR</a>.</p>
+      <div class="exercise">
+        <strong>Exercise</strong>
+        In <code>squares.occ</code>, change <code>consumer</code>'s loop to run 11 times. What
+        happens, and why? Then change it to <code>WHILE TRUE</code>. Why does that behave the same
+        way?
+      </div>
+    </div>
+  </details>
+
+  <details class="fold" open id="protocols">
+    <summary><h2>Protocols</h2></summary>
+    <div class="fold-body prose">
+      <p>A channel can carry structured messages. A <em>sequential protocol</em> sends several values
+        as one communication. A <em>variant protocol</em> sends tagged alternatives:</p>
+<pre class="occam">
+PROTOCOL READING IS INT; REAL64:      -- sensor id, value
+
+PROTOCOL CONTROL
+  CASE
+    set.rate; INT
+    reset
+    stop
+:
+
+PROC logger (CHAN READING in?, CHAN CONTROL ctl?)
+  ...
+:
+</pre>
+      <p><code>ctl ? CASE</code> with one branch per tag receives a variant message. You will see it
+        with <code>ALT</code> in <a href="alt.html">lesson 4</a>.</p>
+    </div>
+  </details>
+
+  <nav class="lesson-nav">
+    <a href="first-program.html"><span class="dir">← lesson 1</span>Your first program</a>
+    <a href="legoland.html" style="text-align:right"><span class="dir">lesson 3 →</span>Legoland</a>
+  </nav>
+</div>

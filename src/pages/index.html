@@ -1,0 +1,221 @@
+<!--meta {"title": "occam", "description": "occamlang.org — history, implementations, tutorials and research archive for occam, the parallel programming language built on Hoare's CSP.", "section": "home"} -->
+<section class="hero">
+  <div class="wrap hero-grid">
+    <div>
+      <span class="kicker">Communicating Sequential Processes</span>
+      <h1>Parallel programs, <span class="red">made simple.</span></h1>
+      <p class="lede">occam is a small, exact language for building systems out of processes that
+        share nothing and talk over channels. Designed at Inmos with Hoare's CSP as its
+        mathematical basis, it ran the transputer, inspired Go and XMOS, and still compiles and
+        runs today.</p>
+      <div class="btn-row">
+        <a class="btn" href="{{root}}learn/index.html">Learn occam</a>
+        <a class="btn ghost" href="{{root}}implementations.html">Get a compiler</a>
+      </div>
+    </div>
+    <div class="procnet" aria-label="Site map drawn as an occam process network">
+      <script type="application/json">
+      {
+        "title": "occamlang.org",
+        "w": 680, "h": 400, "animate": true,
+        "caption": "This site as a process network. Boxes are processes and arrows are channels. Open a  ...  box to see inside it, or click any other box to go there.",
+        "nodes": [
+          { "id": "his", "label": "history", "sub": "1978 → today", "x": 100, "y": 90, "w": 150, "href": "{{root}}history.html" },
+          { "id": "csp", "label": "CSP", "sub": "theory · FDR", "x": 340, "y": 90, "w": 140, "href": "{{root}}csp.html" },
+          { "id": "arc", "label": "archive", "sub": "papers", "x": 585, "y": 90, "w": 140, "href": "{{root}}archive.html" },
+          { "id": "lrn", "label": "learn", "sub": "by example", "x": 100, "y": 300, "w": 150,
+            "net": {
+              "w": 640, "h": 280, "boundary": true, "animate": true,
+              "caption": "The tutorial is a pipeline: each lesson feeds the next.",
+              "nodes": [
+                { "id": "l1", "label": "first", "sub": "SEQ · PROC", "x": 110, "y": 150, "w": 120, "href": "{{root}}learn/first-program.html" },
+                { "id": "l2", "label": "channels", "sub": "PAR · ! ?", "x": 250, "y": 150, "w": 120, "href": "{{root}}learn/channels.html" },
+                { "id": "l3", "label": "legoland", "sub": "networks", "x": 390, "y": 150, "w": 120, "href": "{{root}}learn/legoland.html" },
+                { "id": "l4", "label": "choice", "sub": "ALT · TIMER", "x": 530, "y": 150, "w": 120, "href": "{{root}}learn/alt.html" }
+              ],
+              "chans": [
+                { "from": [14, 150], "to": "l1", "label": "you" },
+                { "from": "l1", "to": "l2" }, { "from": "l2", "to": "l3" }, { "from": "l3", "to": "l4" },
+                { "from": "l4", "to": [626, 150], "label": "fluent" }
+              ]
+            } },
+          { "id": "imp", "label": "implementations", "sub": "razor · spoc · kroc", "x": 340, "y": 300, "w": 180,
+            "net": {
+              "w": 640, "h": 360, "boundary": true, "animate": true,
+              "caption": "Lineage of the main compilers. Click one to read about it.",
+              "nodes": [
+                { "id": "inmos", "label": "Inmos occ2", "sub": "1987", "x": 150, "y": 100, "w": 150, "href": "{{root}}implementations.html#inmos" },
+                { "id": "spoc", "label": "SPoC", "sub": "occam → C", "x": 490, "y": 100, "w": 140, "href": "{{root}}implementations.html#spoc" },
+                { "id": "kroc", "label": "KRoC", "sub": "occam-π", "x": 150, "y": 250, "w": 150, "href": "{{root}}implementations.html#kroc" },
+                { "id": "razor", "label": "Razor", "sub": "modern KRoC", "x": 355, "y": 250, "w": 130, "href": "{{root}}implementations.html#razor" },
+                { "id": "tvm", "label": "Transterpreter", "sub": "portable VM", "x": 530, "y": 250, "w": 160, "href": "{{root}}implementations.html#transterpreter" }
+              ],
+              "chans": [
+                { "from": "inmos", "to": "spoc", "label": "occam 2" },
+                { "from": "inmos", "to": "kroc", "label": "occ21" },
+                { "from": "kroc", "to": "razor", "label": "fork" },
+                { "from": "kroc", "to": "tvm", "via": [[150, 320], [520, 320]], "label": "bytecode", "at": [330, 334] }
+              ]
+            } },
+          { "id": "hw", "label": "hardware", "sub": "transputer · FPGA", "x": 590, "y": 300, "w": 150, "href": "{{root}}hardware.html" }
+        ],
+        "chans": [
+          { "from": "his", "to": "csp", "label": "ideas" },
+          { "from": "csp", "to": "arc", "label": "papers" },
+          { "from": "his", "to": "lrn", "label": "examples" },
+          { "from": "csp", "to": "imp", "label": "laws" },
+          { "from": "imp", "to": "lrn", "label": "code" },
+          { "from": "imp", "to": "hw", "label": "silicon" },
+          { "from": "hw", "to": "arc", "label": "research" },
+          { "from": [12, 372], "to": "lrn", "via": [[100, 372]], "label": "you", "at": [40, 358] }
+        ]
+      }
+      </script>
+    </div>
+  </div>
+</section>
+
+<section class="strip">
+  <div class="wrap fact-row">
+    <div class="fact"><div class="n">1978</div><div class="l">Hoare publishes <em>Communicating Sequential Processes</em></div></div>
+    <div class="fact"><div class="n">1983</div><div class="l">Inmos releases occam, named for William of Ockham</div></div>
+    <div class="fact"><div class="n">1985</div><div class="l">The T414 transputer runs occam in silicon</div></div>
+    <div class="fact"><div class="n">today</div><div class="l">occam-π compilers still build and run on modern machines</div></div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="wrap two-col">
+    <div class="prose">
+      <span class="kicker">The idea</span>
+      <h2>Processes, channels, and nothing shared</h2>
+      <p>An occam program is a network of processes. Each process has private state. Processes
+        interact only by passing messages over <strong>channels</strong>, and a channel
+        communication happens only when both sender and receiver are ready. There are no locks,
+        no shared variables and no data races, and the compiler checks those rules for you.</p>
+      <p>Because the language maps directly onto Hoare's CSP algebra, an occam program can be
+        reasoned about, transformed and model-checked. The same design worked on one chip, on a
+        thousand-transputer machine and, compiled to gates, on an FPGA.</p>
+      <p>The listing on the right is the classic <em>numbers</em> network from Peter Welch's
+        teaching. Click the <code>...</code> fold lines to open and close them, and use the
+        <kbd>SEQ</kbd>/<kbd>seq</kbd> button at the top of the page to show it the way it
+        looked on a lecture-room whiteboard.</p>
+      <p><a href="{{root}}learn/legoland.html">Build it yourself in the Legoland lesson →</a></p>
+    </div>
+    <figure class="listing">
+      <figcaption><span>numbers.occ</span><span>occam-π · KRoC / Razor</span></figcaption>
+<pre class="occam">
+#INCLUDE "course.module"
+
+{{{! PROC succ, delta, prefix -- the Legoland parts
+PROC succ (CHAN INT in?, out!)
+  WHILE TRUE
+    INT x:
+    SEQ
+      in ? x
+      out ! x PLUS 1
+:
+
+PROC delta (CHAN INT in?, out.0!, out.1!)
+  WHILE TRUE
+    INT x:
+    SEQ
+      in ? x
+      PAR
+        out.0 ! x
+        out.1 ! x
+:
+
+PROC prefix (VAL INT n, CHAN INT in?, out!)
+  SEQ
+    out ! n
+    WHILE TRUE
+      INT x:
+      SEQ
+        in ? x
+        out ! x
+:
+}}}
+
+-- 0, 1, 2, 3, ... forever, with no counter variable
+PROC numbers (CHAN INT out!)
+  CHAN INT a, b, c:
+  PAR
+    prefix (0, c?, a!)
+    delta (a?, out!, b!)
+    succ (b?, c!)
+:
+</pre>
+    </figure>
+  </div>
+</section>
+
+<section class="section">
+  <div class="wrap">
+    <span class="kicker">Explore</span>
+    <h2>Everything occam, in one place</h2>
+    <p class="muted" style="max-width:42rem">wotug.org held the community together for decades
+      but is no longer maintained. This site gathers its material, and more from elsewhere, and keeps it current.</p>
+    <div class="card-grid" style="margin-top:1.5rem">
+      <a class="card feature" href="{{root}}history.html">
+        <span class="meta">... history</span>
+        <h3>History &amp; foundations</h3>
+        <p>From Hoare's 1978 paper to Inmos, the transputer, folding editors and the language's descendants.</p>
+      </a>
+      <a class="card feature" href="{{root}}csp.html">
+        <span class="meta">... csp</span>
+        <h3>CSP &amp; model checking</h3>
+        <p>The process algebra behind occam: traces, failures and divergences, refinement, and checking designs with FDR.</p>
+      </a>
+      <a class="card feature" href="{{root}}implementations.html">
+        <span class="meta">... implementations</span>
+        <h3>Compilers &amp; language versions</h3>
+        <p>Razor, SPoC, KRoC and the Transterpreter, plus occam 2.1, occam-π and the unimplemented occam 3 draft.</p>
+      </a>
+      <a class="card feature" href="{{root}}learn/index.html">
+        <span class="meta">... learn</span>
+        <h3>Learn by example</h3>
+        <p>Short, real programs with process diagrams, from your first <code>SEQ</code> to Welch's Legoland networks and <code>ALT</code>.</p>
+      </a>
+      <a class="card feature" href="{{root}}archive.html">
+        <span class="meta">... archive</span>
+        <h3>Research archive</h3>
+        <p>A searchable list of foundational papers, manuals and proceedings, rescued from WoTUG and other sources.</p>
+      </a>
+      <a class="card feature" href="{{root}}hardware.html">
+        <span class="meta">... hardware</span>
+        <h3>Transputers &amp; FPGAs</h3>
+        <p>The transputer family, Handel and Handel-C hardware compilation, and XMOS, which continues the idea today.</p>
+      </a>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="wrap two-col">
+    <div class="prose">
+      <span class="kicker">Run it today</span>
+      <h2>occam is not a museum piece</h2>
+      <p><a href="https://github.com/jimmoores/razor"><strong>Razor</strong></a> is an actively
+        maintained fork of the Kent Retargetable occam Compiler. It brings occam-π to current
+        64-bit systems. <a href="{{root}}implementations.html#spoc"><strong>SPoC</strong></a>, the
+        Southampton Portable occam Compiler, translates occam 2 to portable C.</p>
+      <p>We also plan to <a href="{{root}}playground.html">run occam in your browser</a>, so
+        every example on this site can be edited and run in place.</p>
+    </div>
+    <div class="card-grid">
+      <div class="card">
+        <span class="meta">github.com/jimmoores/razor</span>
+        <h3>Razor</h3>
+        <p>A modernised KRoC toolchain for occam-π on today's machines.</p>
+        <div class="links"><a href="https://github.com/jimmoores/razor">Repository →</a><a href="{{root}}implementations.html#razor">About</a></div>
+      </div>
+      <div class="card">
+        <span class="meta">occam 2 → ANSI C</span>
+        <h3>SPoC</h3>
+        <p>The Southampton Portable occam Compiler. Anywhere with a C compiler can run occam.</p>
+        <div class="links"><a href="{{root}}implementations.html#spoc">About &amp; downloads →</a></div>
+      </div>
+    </div>
+  </div>
+</section>
