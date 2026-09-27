@@ -4,7 +4,7 @@
     <span class="kicker">Hardware</span>
     <h1>occam in silicon</h1>
     <p class="lede">occam was designed for a processor, and it later became a way to design
-      processors. This page covers the transputer, hardware compilation with Handel-C, and the
+      processors. Its links now connect spacecraft. This page covers the transputer, hardware compilation with Handel-C, and the
       FPGA and XMOS work that continues both.</p>
   </div>
 </header>
@@ -14,6 +14,7 @@
     <span class="kicker">Contents</span>
     <a href="#transputer">The transputer</a>
     <a href="#family">The family</a>
+    <a href="#links">Links: 1355 &amp; SpaceWire</a>
     <a href="#handel">Handel &amp; Handel-C</a>
     <a href="#fpga">Transputers in FPGA</a>
     <a href="#xmos">XMOS</a>
@@ -85,11 +86,101 @@
             <tr><td><strong>T800</strong></td><td>1987</td><td>Adds an on-chip 64-bit floating-point unit and 4 KB RAM. The FPU's microcode was developed with formal methods.</td></tr>
             <tr><td><strong>T425 / T805</strong></td><td>late 1980s</td><td>Improved T414 / T800, and the most widely deployed parts.</td></tr>
             <tr><td><strong>C004 / C104</strong></td><td>late 1980s / 1990s</td><td>Link crossbar switch and packet router, for building large reconfigurable networks.</td></tr>
-            <tr><td><strong>T9000</strong></td><td>announced 1991</td><td>Superscalar redesign with virtual channels over DS-Links (later IEEE 1355). Delayed, and never a commercial success.</td></tr>
+            <tr><td><strong>T9000</strong></td><td>announced 1991</td><td>Superscalar redesign with virtual channels over DS-Links (later IEEE 1355). Delayed, and never a commercial success. Its links live on in <a href="#links">SpaceWire</a>.</td></tr>
           </tbody>
         </table></div>
         <p class="muted">Machines built from transputers included the Meiko Computing Surface, Parsytec
           systems, the Atari ATW800 and many plug-in boards for PCs and workstations.</p>
+      </div>
+    </details>
+
+    <details class="fold" open id="links">
+      <summary><h2>Links: IEEE 1355, SpaceWire &amp; 4Links</h2></summary>
+      <div class="fold-body prose">
+        <p>The part of the transputer that has lasted longest is not the processor but its
+          <strong>links</strong>. Today they fly in space.</p>
+        <div class="procnet">
+          <script type="application/json">
+          { "title": "link lineage", "w": 820, "h": 190, "animate": true,
+            "caption": "From transputer links to spacecraft networks. Open SpaceWire to see a typical on-board network.",
+            "nodes": [
+              { "id": "os", "label": "OS-link", "sub": "T414 \u00b7 1985", "x": 90, "y": 95, "w": 120 },
+              { "id": "ds", "label": "DS-link", "sub": "T9000 \u00b7 C104", "x": 290, "y": 95, "w": 130 },
+              { "id": "ieee", "label": "IEEE 1355", "sub": "1995", "x": 490, "y": 95, "w": 120 },
+              { "id": "spw", "label": "SpaceWire", "sub": "ECSS-E-ST-50-12C", "x": 700, "y": 95, "w": 150,
+                "net": { "w": 680, "h": 300, "boundary": true, "animate": true,
+                  "caption": "A spacecraft network: every link is a pair of channels, one each way, with packets steered by a router.",
+                  "nodes": [
+                    { "id": "cam", "label": "instrument", "x": 120, "y": 90, "w": 130 },
+                    { "id": "gps", "label": "star tracker", "x": 120, "y": 220, "w": 130 },
+                    { "id": "r", "label": "router", "sub": "wormhole", "x": 340, "y": 155, "w": 120, "h": 70 },
+                    { "id": "mm", "label": "mass memory", "x": 560, "y": 90, "w": 140 },
+                    { "id": "obc", "label": "computer", "x": 560, "y": 220, "w": 140 }
+                  ],
+                  "chans": [
+                    { "from": "cam", "to": "r", "label": "data" },
+                    { "from": "gps", "to": "r", "label": "attitude" },
+                    { "from": "r", "to": "mm", "label": "store" },
+                    { "from": "r", "to": "obc", "label": "control" },
+                    { "from": "obc", "to": "gps", "via": [[560, 268], [120, 268]], "label": "commands", "at": [340, 256] }
+                  ] } }
+            ],
+            "chans": [
+              { "from": "os", "to": "ds", "label": "faster" },
+              { "from": "ds", "to": "ieee", "label": "standard" },
+              { "from": "ieee", "to": "spw", "label": "ESA" },
+              { "from": "spw", "to": [700, 178], "label": "100+ spacecraft", "at": [760, 160] }
+            ] }
+          </script>
+        </div>
+
+        <h3>OS-links</h3>
+        <p>The T414 and T800 links were simple and robust. They ran at 10 or 20&nbsp;Mbit/s, sent each
+          byte in a small frame and acknowledged it, and needed only two wires each way. A link is
+          a pair of occam channels, one in each direction. Placing a channel on a link rather than
+          in memory was a configuration decision, not a change to the program.</p>
+
+        <h3>DS-links and the C104</h3>
+        <p>For the T9000, Inmos designed a faster link, the <strong>DS-link</strong>. It used
+          <em>data-strobe</em> encoding: one wire carries the data and a second, the strobe,
+          changes whenever the data does not. XOR-ing the two recovers the clock, so the link
+          tolerates skew and needs no clock-recovery circuitry. DS-links carried packets that
+          multiplexed many <em>virtual channels</em> over one wire. The <strong>C104</strong>
+          routing switch forwarded those packets between 32 links using wormhole routing, so
+          large machines could be built from standard parts.</p>
+
+        <h3>IEEE 1355</h3>
+        <p>Inmos engineers and European partners turned DS-link technology into an open standard,
+          <strong>IEEE Std 1355-1995</strong>, <em>Standard for Heterogeneous InterConnect</em>
+          (HIC), approved on 21 September 1995. It defines single-ended, differential and fibre-optic
+          versions running from 10&nbsp;Mbit/s to 1&nbsp;Gbit/s, over distances from a metre to a few
+          kilometres. The T9000 did not succeed commercially, but its links now had a life of their
+          own. (<a href="https://en.wikipedia.org/wiki/IEEE_1355">background</a>)</p>
+
+        <h3>SpaceWire</h3>
+        <p>The European Space Agency needed a simple, fault-tolerant on-board network and adopted
+          the differential DS part of IEEE 1355, with LVDS signalling and connectors fit for space.
+          The result is <strong>SpaceWire</strong>. It is standardised as
+          <strong>ECSS-E-ST-50-12C</strong>, and the University of Dundee's Space Technology Centre,
+          under Steve Parkes, led the standardisation work. It runs at 2 to 200&nbsp;Mbit/s and more,
+          and is used by ESA, NASA, JAXA and others on well over a hundred spacecraft, including the
+          James Webb Space Telescope, Swift, the Lunar Reconnaissance Orbiter and GOES-R.
+          (<a href="https://en.wikipedia.org/wiki/SpaceWire">overview</a>)</p>
+        <p>SpaceWire still reflects the occam model. Flow is credit-based: a receiver sends a
+          <em>flow-control token</em> for each few characters of buffer space it has free, so the
+          sender never transmits data that cannot be accepted. That is the transputer link's
+          acknowledgement, widened into a small window, and it is what makes a SpaceWire link behave
+          like an occam channel pair.</p>
+
+        <h3>4Links</h3>
+        <p><a href="https://4links.space/"><strong>4Links</strong></a> was founded in 2000 by former
+          Inmos engineer <a href="https://inmos.com/person.php?id=956">Paul Walker</a> to promote
+          and support the link technology. Most of its customers turned out to be in the space
+          industry. Walker contributed to the development of the SpaceWire standard, and 4Links
+          makes SpaceWire test and development equipment: link analysers, monitors, routers and
+          software used to integrate and test spacecraft systems. 4Links also drafted a
+          <a href="http://spacewire.esa.int/WG/SpaceWire/SpW-WG-Mtg19-Proceedings/Documents/SpW%20WG%20mtg%2319%20Proceedings%20(A)/SpaceWire-Handbook-draft-20120924.pdf"><em>SpaceWire
+          Handbook</em></a> for the ESA SpaceWire working group.</p>
       </div>
     </details>
 
