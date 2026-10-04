@@ -63,7 +63,14 @@ channels. See the comment at the top of `procnet.js` for the full schema.
 </script></div>
 ```
 
-**Archive entries.** Add an object to `OCCAM_PAPERS` in `src/assets/data/papers.js`.
+**Archive entries.** Add hand-picked papers to `OCCAM_PAPERS` in `src/assets/data/papers.js`.
+They appear as "key" papers. A WoTUG record with the same title is merged into the curated entry.
+
+`src/assets/data/wotug.js` is generated from the WoTUG paper database (708 papers, 1987–2013)
+by `python3 tools/import-wotug.py`. That database's server often refuses connections, so the
+importer caches every page in `.cache/wotug/` (gitignored) and only re-fetches pages that came
+back with an error. Re-run it with `--passes N` to recover more abstracts, or with `--offline`
+to regenerate from the cache alone. Topic tags are assigned automatically by keyword.
 
 ## Deploy
 

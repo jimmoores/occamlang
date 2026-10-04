@@ -279,6 +279,14 @@ pre.occam .cf-tail { color: var(--fold); }
 .paper .v { color: var(--muted); font-size: .9rem; font-style: italic; }
 .paper .n { font-size: .92rem; color: var(--ink-2); margin-top: .3rem; }
 .paper .pl { display: flex; gap: .9rem; margin-top: .3rem; font-size: .88rem; font-weight: 600; flex-wrap: wrap; }
+.archive-tools select { font: inherit; font-size: .9rem; padding: .55rem .6rem; border: 1.5px solid var(--rule-strong); border-radius: var(--radius); background: var(--card); color: var(--ink); max-width: 100%; }
+.paper .abstract { margin-top: .35rem; font-size: .92rem; color: var(--ink-2); }
+.paper .abstract summary { cursor: pointer; font-family: var(--mono); font-size: .75rem; color: var(--fold); list-style: none; }
+.paper .abstract summary::before { content: "... "; }
+.paper .abstract[open] summary::before { content: "{{{ "; }
+.paper .abstract summary::-webkit-details-marker { display: none; }
+.paper .abstract p { margin: .35rem 0 0; max-width: 48rem; }
+.tag.key-tag { border-color: var(--accent); color: var(--accent); vertical-align: middle; }
 .count { font-family: var(--mono); font-size: .8rem; color: var(--muted); }
 
 /* ---------- tables ---------- */
