@@ -9,12 +9,18 @@ Re-run the script to fill gaps; each run keeps everything it has already got.
     python3 tools/import-wotug.py            # fetch what's missing, then generate
     python3 tools/import-wotug.py --offline  # generate from the cache only
     python3 tools/import-wotug.py --passes 5 # extra retry passes for detail pages
+    python3 tools/import-wotug.py --mirror   # also download papers/slides into src/papers/wotug/
+
+Mirrored files are served from occamlang.org so the corpus survives if wotug.org goes;
+links in the generated data then point at the local copy.
 """
-import argparse, html, json, os, re, sys, time, urllib.request
+import argparse, html, json, os, re, shutil, sys, time, urllib.request
 
 BASE = "https://www.wotug.org/paperdb/"
 CACHE = os.path.join(".cache", "wotug")
 OUT = os.path.join("src", "assets", "data", "wotug.js")
+MIRROR = os.path.join("src", "papers", "wotug")
+MAGIC = {b"%PDF": "pdf", b"%!PS": "ps", b"\xd0\xcf\x11\xe0": "ppt"}
 DB_ERROR = "db_connect: Could not connect"
 
 
@@ -78,12 +84,66 @@ def topics_for(title, abstract):
     return found or ["design"]
 
 
+def cached_name(url):
+    m = re.search(r"send_file\.php\?num=(\d+)", url)
+    return f"send_file-{m.group(1)}" if m else re.sub(r"^https?://www\.wotug\.org/", "", url).replace("/", "__")
+
+
+def file_kind(data):
+    """Return the extension for complete file data, or None if it is unusable.
+
+    WoTUG's send_file.php sometimes writes database errors ahead of the file but keeps
+    the original Content-Length, which silently truncates the end of the file. So only
+    data that starts with a known signature *and* ends with its trailer is accepted."""
+    for magic, ext in MAGIC.items():
+        if data.startswith(magic):
+            tail = data[-4096:]
+            if ext == "pdf" and b"%%EOF" not in tail:
+                return None
+            if ext == "ps" and b"%%EOF" not in tail and b"%%Trailer" not in tail:
+                return None
+            return ext
+    return None
+
+
+def mirror_file(url, offline=False, attempts=10):
+    """Return a cached, complete copy of url (with its real extension), downloading if needed."""
+    path = os.path.join(CACHE, "files", cached_name(url))
+
+    def kind():
+        if not os.path.exists(path):
+            return None
+        with open(path, "rb") as f:
+            return file_kind(f.read())
+
+    for a in range(0 if offline or kind() else attempts):
+        try:
+            data = urllib.request.urlopen(url, timeout=90).read()
+            if file_kind(data):
+                with open(path, "wb") as f:
+                    f.write(data)
+                break
+        except Exception:
+            pass
+        time.sleep(2 + a)
+    ext = kind()
+    if not ext:
+        if not offline:
+            print(f"could not mirror {url}", file=sys.stderr)
+        return None
+    typed = path + "." + ext
+    if not os.path.exists(typed) or os.path.getsize(typed) != os.path.getsize(path):
+        shutil.copyfile(path, typed)
+    return typed
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--offline", action="store_true")
     ap.add_argument("--passes", type=int, default=1)
+    ap.add_argument("--mirror", action="store_true", help="download files and serve local copies")
     args = ap.parse_args()
-    for d in ("", "procs", "papers"):
+    for d in ("", "procs", "papers", "files"):
         os.makedirs(os.path.join(CACHE, d), exist_ok=True)
 
     # 1. master list: number, title, authors, year
@@ -176,6 +236,23 @@ def main():
                 key = "slides" if "slide" in href.lower() else (clean(label) or "PDF")
                 p["l"].setdefault(key, absolute(href))
 
+    mirrored = 0
+    if args.mirror:
+        for p in papers.values():
+            for label, url in list(p["l"].items()):
+                path = mirror_file(url, offline=args.offline)
+                if not path:
+                    continue
+                ext = path.rsplit(".", 1)[-1]
+                slug = re.sub(r"[^a-z0-9]+", "-", label.lower()).strip("-") or "file"
+                dest = os.path.join(MIRROR, str(p["id"]), f"{slug}.{ext}")
+                os.makedirs(os.path.dirname(dest), exist_ok=True)
+                if not os.path.exists(dest) or os.path.getsize(dest) != os.path.getsize(path):
+                    shutil.copyfile(path, dest)
+                # site-relative path; the archive page prefixes it with the site root
+                p["l"][label] = "papers/wotug/%d/%s.%s" % (p["id"], slug, ext)
+                mirrored += 1
+
     out = []
     for p in sorted(papers.values(), key=lambda p: (p["y"] or 0, p["t"].lower())):
         p["k"] = topics_for(p["t"], p["x"])
@@ -190,7 +267,8 @@ def main():
         f.write("window.WOTUG_PROCS = " + json.dumps(procs, ensure_ascii=False, separators=(",", ":")) + ";\n")
         f.write("window.WOTUG_PAPERS = [\n" + ",\n".join(json.dumps(p, ensure_ascii=False, separators=(",", ":")) for p in out) + "\n];\n")
     linked = sum(1 for p in out if p.get("l"))
-    print(f"{len(out)} papers, {len(procs)} proceedings, {with_abstract} abstracts, {linked} with files -> {OUT}", file=sys.stderr)
+    print(f"{len(out)} papers, {len(procs)} proceedings, {with_abstract} abstracts, {linked} with files, "
+          f"{mirrored} files mirrored -> {OUT}", file=sys.stderr)
 
 
 if __name__ == "__main__":

@@ -43,6 +43,7 @@ async function build() {
   await rm(OUT, { recursive: true, force: true });
   await mkdir(OUT, { recursive: true });
   await cp(join(SRC, "assets"), join(OUT, "assets"), { recursive: true });
+  await cp(join(SRC, "papers"), join(OUT, "papers"), { recursive: true }).catch(() => {});
   for (const f of ["CNAME", "robots.txt", "favicon.svg"]) {
     await cp(join(SRC, f), join(OUT, f)).catch(() => {});
   }
